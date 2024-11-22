@@ -3,6 +3,7 @@
 import ast
 import re
 import fnmatch
+import sciris as sc
 import starsim_ai as sa
 
 class GitDiff():
@@ -59,7 +60,7 @@ class GitDiff():
                     # Save the previous file and hunks if applicable
                     if current_file and current_hunks:
                         current_hunks.append(''.join(current_hunks.pop()))
-                        diffs.append({"file": current_file, "hunks": current_hunks})
+                        diffs.append(sc.objdict({"file": current_file, "hunks": current_hunks}))
                     
                     # Start a new file and check if it matches any pattern
                     current_file = file_match.group(1)
@@ -89,7 +90,7 @@ class GitDiff():
             # Save the last file and hunks if present
             if current_file and current_hunks:
                 current_hunks.append(''.join(current_hunks.pop()))
-                diffs.append({"file": current_file, "hunks": current_hunks})
+                diffs.append(sc.objdict({"file": current_file, "hunks": current_hunks}))
         
         return diffs
 
@@ -130,7 +131,7 @@ class PythonCode():
             code_lines, visitor = self.get_class_methods(name)
             res = {}
             for m in visitor.methods:
-                res[m.name] = ''.join(code_lines[m['lineno']-1:m['end_lineno']+1])
+                res[m['name']] = ''.join(code_lines[m['lineno']-1:m['end_lineno']+1])
             return res
         else:
             for c in self.classes:
