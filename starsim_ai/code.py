@@ -2,6 +2,7 @@
 """
 
 import ast
+import sciris as sc
 
 class ClassVisitor(ast.NodeVisitor):
     """
@@ -24,15 +25,16 @@ class ClassVisitor(ast.NodeVisitor):
         self.classes = []
 
     def visit_ClassDef(self, node):
-        # Collect class details
-        class_info = {
-            "name": node.name,
-            "bases": [base.id if isinstance(base, ast.Name) else ast.dump(base) for base in node.bases],
-            "methods": [n.name for n in node.body if isinstance(n, ast.FunctionDef)],
-            "lineno": node.lineno,
-            "end_lineno": getattr(node, "end_lineno", None),  # Python 3.8+
-        }
-        self.classes.append(class_info)
+        if isinstance(node, ast.ClassDef):
+            # Collect class details
+            class_info = sc.objdict({
+                "name": node.name,
+                "bases": [base.id if isinstance(base, ast.Name) else ast.dump(base) for base in node.bases],
+                "methods": [n.name for n in node.body if isinstance(n, ast.FunctionDef)],
+                "lineno": node.lineno,
+                "end_lineno": getattr(node, "end_lineno", None),  # Python 3.8+
+            })
+            self.classes.append(class_info)
         self.generic_visit(node)  # Continue visiting child nodes
 
         
@@ -66,11 +68,11 @@ class MethodVisitor(ast.NodeVisitor):
         # Visit each method (FunctionDef) in the class body
         for child in node.body:
             if isinstance(child, ast.FunctionDef):
-                method_info = {
+                method_info = sc.objdict({
                     "name": child.name,
                     "lineno": child.lineno,
                     "end_lineno": getattr(child, "end_lineno", None),  # Python 3.8+
-                }
+                })
                 self.methods.append(method_info)
         # Continue visiting child nodes
         self.generic_visit(node)
