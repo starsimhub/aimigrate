@@ -1,4 +1,3 @@
-from langchain.chains import LLMChain
 from langchain_core.prompts import PromptTemplate
 
 from langchain_openai import ChatOpenAI
@@ -8,8 +7,8 @@ from enum import Enum
 from pydantic import BaseModel, Field, field_validator
 
 class ProviderModels(Enum):
-    OPENAI = {'gpt-3.5-turbo', 'gpt-4o-mini'}
-    GEMINI = {'gemini-1.5-flash'}
+    OPENAI = {'gpt-3.5-turbo', 'gpt-4o', 'gpt-4o-mini', 'o1-mini', 'o1-preview'}
+    GEMINI = {'gemini-1.5-flash', 'gemini-1.5-flash-8b', 'gemini-1.5-pro'}
 
 # Pydantic model for configuration
 class LLMConfig(BaseModel):
