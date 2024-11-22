@@ -10,6 +10,9 @@ python = "^3.10"
 langchain-openai = "^0.2.9"
 scipy = "^1.14.1"
 sciris = "^3.2.0"
+langchain = "^0.3.7"
+pytest = "^8.3.3"
+langchain-google-genai = "^2.0.5"
 
 [build-system]
 requires = ["poetry-core"]
