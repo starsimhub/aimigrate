@@ -26,15 +26,7 @@ def calculate_code_similarity(code_A, code_B):
     classes_A = sa.PythonCode(code_A)
     classes_B = sa.PythonCode(code_B)
 
-    # use the open ai model to get embeddings
-    # https://python.langchain.com/docs/integrations/text_embedding/openai/
-    embeddings = OpenAIEmbeddings(
-        model="text-embedding-3-small",
-        # With the `text-embedding-3` class
-        # of models, you can specify the size
-        # of the embeddings you want returned.
-        # dimensions=1024
-    )
+    embedder = sa.SimpleEmbedding(model='text-embedding-3-small')
 
     # we look over the classes in the original code
     class_results = sc.objdict()
@@ -46,11 +38,13 @@ def calculate_code_similarity(code_A, code_B):
         s_B = classes_B.get_class_string(class_name)
 
         # vectors
-        v_A = embeddings.embed_query(s_A)
-        v_B = embeddings.embed_query(s_B)
+        v_A = embedder.get_embedding(s_A)
+        v_B = embedder.get_embedding(s_B)
 
+        # calculate similarity
         similarity = calculate_similarity(v_A, v_B)
 
+        # save results
         class_results.setdefault('class', []).append(class_name)
         for k,v in similarity.items():
             class_results.setdefault(k, []).append(v)        
@@ -74,8 +68,8 @@ def calculate_code_similarity(code_A, code_B):
                 continue
 
             # vectors
-            v_A = embeddings.embed_query(s_A[method_name])
-            v_B = embeddings.embed_query(s_B[method_name])
+            v_A = embedder.get_embedding(s_A[method_name])
+            v_B = embedder.get_embedding(s_B[method_name])
 
             similarity = calculate_similarity(v_A, v_B)
 
@@ -103,7 +97,6 @@ def plot_code_similarity(stem):
     fig, axes = plt.subplots(1, 3, figsize=(4*num_metrics, 6))
     for i, k in enumerate(metrics):
         kwargs = {}
-
 
         ax = axes[i]
         if i == 0:
