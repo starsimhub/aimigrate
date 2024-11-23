@@ -3,6 +3,7 @@
 import ast
 import re
 import fnmatch
+import tiktoken
 import sciris as sc
 import starsim_ai as sa
 
@@ -22,6 +23,23 @@ class GitDiff():
         print(f"Number of files found: {len(diffs)}")
         print(f"Number of hunks: {sum([len(diff['hunks']) for diff in diffs])}")
         print(f"Names of files found: {[diff['file'] for diff in diffs]}")
+
+    def get_diff_string(self, file=None):
+        '''
+        Get the diff string (optionally for a file)
+        '''
+        if file is not None:
+            return ''.join([''.join(diff['hunks']) for diff in self.diffs if diff["file"] == file])
+        else:
+            return ''.join([''.join(diff['hunks']) for diff in self.diffs])
+
+
+    def count_all_tokens(self, model="gpt-4o"):
+        '''
+        Count the total number of tokens in the diff (all hunks)
+        '''
+        encoding = tiktoken.encoding_for_model(model)
+        return len(encoding.encode(self.get_diff_string()))
 
     def print_file_hunks(self, file):
         '''
@@ -107,6 +125,9 @@ class PythonCode():
     def from_file(self, file_path):
         with open(file_path, 'r') as file:
             self.code_lines = file.readlines()
+
+    def get_code_string(self):
+        return ''.join(self.code_lines)
 
     def set_classes(self):
         tree = ast.parse(''.join(self.code_lines))

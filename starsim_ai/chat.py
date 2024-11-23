@@ -6,7 +6,7 @@ from langchain_google_genai import ChatGoogleGenerativeAI
 from enum import Enum
 from pydantic import BaseModel, Field, field_validator
 
-class ProviderModels(Enum):
+class LLMModels(Enum):
     OPENAI = {'gpt-3.5-turbo', 'gpt-4o', 'gpt-4o-mini', 'o1-mini', 'o1-preview'}
     GEMINI = {'gemini-1.5-flash', 'gemini-1.5-flash-8b', 'gemini-1.5-pro'}
 
@@ -22,7 +22,7 @@ class LLMConfig(BaseModel):
     @field_validator("model")
     @classmethod
     def validate_model(cls, model):
-        for provider in ProviderModels:
+        for provider in LLMModels:
             if model in provider.value:
                 return model
         raise ValueError(f"Model '{model}' not found in any provider.")
@@ -30,7 +30,7 @@ class LLMConfig(BaseModel):
     @field_validator("provider")
     @classmethod
     def set_provider(cls, model):
-        for provider_enum in ProviderModels:
+        for provider_enum in LLMModels:
             if model in provider_enum.value:
                 return provider_enum.name
         raise ValueError(f"No provider found for model '{model}'.")
@@ -50,7 +50,7 @@ class SimpleQuery():
         elif self.config.provider == 'GEMINI':
             self.llm = ChatGoogleGenerativeAI(model=self.config.model)
         else:
-            raise ValueError(f"Unsupported provider. Choose {[e.name for e in ProviderModels]}")
+            raise ValueError(f"Unsupported provider. Choose {[e.name for e in LLMModels]}")
 
         # Setup the prompt and chain
         self.prompt = PromptTemplate(
