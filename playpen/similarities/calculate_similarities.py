@@ -22,20 +22,31 @@ def calculate_similarity(v1,v2):
 
 
 def calculate_code_similarity(code_A, code_B):
+    """
+    Calculate similarity between two codes
+    """
+
+    # load the match dict
+    with open("match_methods.json", "r") as f:
+        match_methods = json.load(f)
+    match_classes = {k.split('.')[0]:v.split('.')[0] for k,v in match_methods.items()}
+
     # parse the code
     classes_A = sa.PythonCode(code_A)
     classes_B = sa.PythonCode(code_B)
 
+    # create embedder
     embedder = sa.SimpleEmbedding(model='text-embedding-3-small')
 
-    # we look over the classes in the original code
+    # calculate similarity by matching classes
     class_results = sc.objdict()
-    for class_name in [c['name'] for c in classes_A.classes]:
+    for class_name in match_classes:
+    # for class_name in [c['name'] for c in classes_A.classes]:
         print("Class:", class_name)
 
         # strings
         s_A = classes_A.get_class_string(class_name)
-        s_B = classes_B.get_class_string(class_name)
+        s_B = classes_B.get_class_string(match_classes[class_name].split('.')[0])
 
         # vectors
         v_A = embedder.get_embedding(s_A)
@@ -52,37 +63,35 @@ def calculate_code_similarity(code_A, code_B):
     with open(f'class_results_{code_B.stem}.json', 'w') as f:
         json.dump(class_results, f, indent=2)
 
-    # we look over the methods in the original code
+    # calculate similarity by matching class methods
     method_results = sc.objdict()
-    for class_name in [c['name'] for c in classes_A.classes]:
-        print("Class:", class_name)
+    for method_name in match_methods.keys():
+        print("Method:", method_name, ':', match_methods[method_name])
 
         # strings
-        s_A = classes_A.get_class_string(class_name, methods_flag=True)
-        s_B = classes_B.get_class_string(class_name, methods_flag=True)
-            
-        for method_name in s_A.keys():
-            print("Method:", method_name)
-            if method_name not in s_B:
-                print(f"Method {method_name} not found in class {class_name} in code_B")            
-                continue
+        s_A = classes_A.get_class_string(method_name.split('.')[0], methods_flag=True)
+        s_B = classes_B.get_class_string(match_methods[method_name].split('.')[0], methods_flag=True)
 
-            # vectors
-            v_A = embedder.get_embedding(s_A[method_name])
-            v_B = embedder.get_embedding(s_B[method_name])
+        # vectors
+        v_A = embedder.get_embedding(s_A[method_name.split('.')[1]])
+        v_B = embedder.get_embedding(s_B[match_methods[method_name].split('.')[1]])
 
-            similarity = calculate_similarity(v_A, v_B)
+        similarity = calculate_similarity(v_A, v_B)
 
-            method_results.setdefault('class', []).append(class_name)
-            method_results.setdefault('method', []).append(method_name)
-            for k,v in similarity.items():
-                method_results.setdefault(k, []).append(v)
+        method_results.setdefault('class', []).append(method_name.split('.')[0])
+        method_results.setdefault('method', []).append(method_name.split('.')[1])
+        for k,v in similarity.items():
+            method_results.setdefault(k, []).append(v)
         
     with open(f'methods_result_{code_B.stem}.json', 'w') as f:
         json.dump(method_results, f, indent=2)
 
 
 def plot_code_similarity(stem):
+    """
+    Plot the similarity results
+    """
+    
     import matplotlib.pyplot as plt
 
     with open(f'class_results_{stem}.json', 'r') as f:
