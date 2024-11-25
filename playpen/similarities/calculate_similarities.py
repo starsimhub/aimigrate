@@ -91,7 +91,7 @@ def plot_code_similarity(stem):
     """
     Plot the similarity results
     """
-    
+
     import matplotlib.pyplot as plt
 
     with open(f'class_results_{stem}.json', 'r') as f:
@@ -130,8 +130,8 @@ def plot_code_similarity(stem):
 
 if __name__ == '__main__':
     # files for code comparison
-    code_A = sa.paths.data / 'zombiesim' / 'zombie.py' # v0.5.2
-    code_B = sa.paths.data / 'zombiesim' / 'zombie_ref.py' # v2.1.1
+    code_A = sa.paths.data / 'zombiesim' / 'zombie_ref.py' # v2.1.1
+    code_B = sa.paths.data / 'zombiesim' / 'zombie.py' # v0.5.2
 
     # calculate similarity metrics between the two codes
     calculate_code_similarity(code_A, code_B)
