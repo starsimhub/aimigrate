@@ -160,18 +160,46 @@ def calculate_similarities(file_A, result_dir=None):
                     class_results.setdefault('class', []).append(class_name)
                     for k,v in similarity.items():
                         class_results.setdefault(k, []).append(v)
+
                 except Exception as e:
-                    print(f"Error calculating similarity: {e}")
+                    print(f"Error calculating similarity (class): {e}")
                         
             with open(result_dir / f'class_similarities_{stem}.json', 'w') as f:
                 json.dump(class_results, f, indent=2)
 
+
+            # calculate similarity by matching class methods
+            method_results = sc.objdict()
+            for method_name in match_methods.keys():
+                print("Method:", method_name, ':', match_methods[method_name])
+
+                try:
+                    # strings
+                    s_A = classes_A.get_class_string(method_name.split('.')[0], methods_flag=True)
+                    s_B = classes_B.get_class_string(match_methods[method_name].split('.')[0], methods_flag=True)
+
+                    # vectors
+                    v_A = embedder.get_embedding(s_A[method_name.split('.')[1]])
+                    v_B = embedder.get_embedding(s_B[match_methods[method_name].split('.')[1]])
+
+                    similarity = calculate_similarity(v_A, v_B)
+
+                    method_results.setdefault('class', []).append(method_name.split('.')[0])
+                    method_results.setdefault('method', []).append(method_name.split('.')[1])
+                    for k,v in similarity.items():
+                        method_results.setdefault(k, []).append(v)
+                except Exception as e:
+                    print(f"Error calculating similarity (method): {e}")
+                    
+            with open(result_dir / f'method_similarities_{stem}.json', 'w') as f:
+                json.dump(method_results, f, indent=2)
+
         except Exception as e:
-            print(f"Error parsing code: {e}, \nmoving on...")
+            print(f"Error parsing code: {e} (trial), \nmoving on...")
             continue
 
 
-def plot_results(result_dir, reference_result_dir=Path(__file__).parents[1] / 'similarities'):
+def plot_class_results(result_dir, reference_result_dir=Path(__file__).parents[1] / 'similarities'):
     # find the similarity files
     result_files = list(result_dir.glob('class_similarities_*.json'))
 
@@ -214,62 +242,60 @@ def plot_results(result_dir, reference_result_dir=Path(__file__).parents[1] / 's
         names[0] = "baseline"
         ax.set_xticks(range(len(names)))
         ax.set_xticklabels(names, rotation=90)
+        ax.set_title(f'{metric}')
 
     plt.tight_layout()
-    plt.savefig('similarity_results.png')
+    plt.savefig('similarity_class_results.png') 
+    
 
-    print("done")
 
-def plot_results_(result_dir, reference_result_dir=Path(__file__).parents[1] / 'similarities' ):
-
+def plot_methods_results(result_dir, reference_result_dir=Path(__file__).parents[1] / 'similarities'):
     # find the similarity files
-    result_files = list(result_dir.glob('class_similarities_*.json'))
+    result_files = list(result_dir.glob('method_similarities_*.json'))
 
-    # get the matplotlib color cycle
-    colors = plt.rcParams['axes.prop_cycle'].by_key()['color']
-    print("number of colors:", len(colors))
-
-    # plotting by class    
-    axes = None
-    with open(reference_result_dir / "class_results_zombie_ref.json", "r") as f:
-        reference_results = pd.DataFrame(json.load(f)).set_index('class')
+    # load reference results
+    with open(reference_result_dir / "methods_result_zombie_ref.json", "r") as f:
+        results = pd.DataFrame(json.load(f)).set_index(['class', 'method'])
 
     for result_file in result_files:
         print("Processing", result_file)
-        try:
-            # load the results
-            with open(result_file, 'r') as f:
-                results = pd.DataFrame(json.load(f)).set_index('class')
 
-            # merge with reference results
-            results = pd.merge(results, reference_results, 
-                               left_index=True, right_index=True, suffixes=('_AI', '_reference'))
-            
-            # figure out which trial we are plotting
-            match = re.match(r'class_similarities_(.+)\.json', result_file.name)
+        # create master dataframe
+        try:
+            # get stem
+            match = re.match(r'method_similarities_(.+)\.json', result_file.name)
             stem,  = match.groups()
 
-            # setup figure
-            if axes is None:
-                # subplots dimensions
-                nx = len(calculate_similarity([0, 1], [0, 1]))
-                fig, axes = plt.subplots(1, nx, figsize=(nx*3, 2.5))
-                metric_names = list(calculate_similarity([0, 1], [0, 1]).keys())
+            # load the results
+            with open(result_file, 'r') as f:
+                these_results = pd.DataFrame(json.load(f)).set_index(['class', 'method'])
+            new_names = {k: k + f'_{stem}' for k in these_results.columns}
+            these_results.rename(columns=new_names, inplace=True)
 
-            for ix, metric_name in enumerate(metric_names):
-                ax = axes[ix]
-                jitter = np.random.rand(len(results)) * 0.07*np.ptp(results[metric_name+'_reference'])
-                ax.plot(results[metric_name+'_reference']+jitter, 
-                        results[metric_name+'_AI'], 'o', label=stem)
-                ax.set_title(metric_name)
-                if ix == nx - 1:
-                    ax.legend(bbox_to_anchor=(1.05, 1), loc='upper left')
-
+            # merge with reference results
+            results = pd.merge(results, these_results, left_index=True, right_index=True)
+            
         except Exception as e:
-            print(f"Error plotting results: {e}")
+            print(f"Error with results: {e}")
+            continue        
+
+    metrics = list(calculate_similarity([0, 1], [1, 0]).keys())
+    fig, axes = plt.subplots(1, len(metrics), figsize=(len(metrics)*3, 4.5))
+    for ix, metric in enumerate(metrics):
+        ax = axes[ix]
+        group = results[[c for c in results.columns if metric in c]]
+        columns = group.columns
+        for i, c in enumerate(columns):
+            ax.plot(len(group)*[i], group[c], 'o')
+            print(f"{c}: {group[c].median():e}")
+        names = ['_'.join(c.split('_')[1:]) for c in columns]
+        names[0] = "baseline"
+        ax.set_xticks(range(len(names)))
+        ax.set_xticklabels(names, rotation=90)
+        ax.set_title(f'{metric}')
 
     plt.tight_layout()
-    plt.savefig('similarity_results.png')  
+    plt.savefig('similarity_methods_results.png') 
     
 
 if __name__ == '__main__':
@@ -277,11 +303,12 @@ if __name__ == '__main__':
     # directory with results
     result_dir = Path(__file__).parent / 'results'    
 
-    # # match the methods (LLM code -> refactored code)
-    # run_match_methods(result_dir)
+    # match the methods (LLM code -> refactored code)
+    run_match_methods(result_dir)
 
-    # # calculate similarities
-    # calculate_similarities(sa.paths.data / 'zombiesim' / 'zombie_ref.py', result_dir=result_dir)
+    # calculate similarities
+    calculate_similarities(sa.paths.data / 'zombiesim' / 'zombie_ref.py', result_dir=result_dir)
 
     # plot results
-    plot_results(result_dir)
+    plot_class_results(result_dir)
+    plot_methods_results(result_dir)
