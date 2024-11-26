@@ -6,7 +6,6 @@ import sciris as sc
 import pandas as pd
 from scipy.spatial import distance
 from scipy.stats import pearsonr
-from langchain_openai import OpenAIEmbeddings
 import starsim_ai as sa
 
 # change cwd to the directory of this file
@@ -41,7 +40,6 @@ def calculate_code_similarity(code_A, code_B):
     # calculate similarity by matching classes
     class_results = sc.objdict()
     for class_name in match_classes:
-    # for class_name in [c['name'] for c in classes_A.classes]:
         print("Class:", class_name)
 
         # strings
@@ -60,7 +58,7 @@ def calculate_code_similarity(code_A, code_B):
         for k,v in similarity.items():
             class_results.setdefault(k, []).append(v)        
                 
-    with open(f'class_results_{code_B.stem}.json', 'w') as f:
+    with open(f'class_results_{code_A.stem}.json', 'w') as f:
         json.dump(class_results, f, indent=2)
 
     # calculate similarity by matching class methods
@@ -83,7 +81,7 @@ def calculate_code_similarity(code_A, code_B):
         for k,v in similarity.items():
             method_results.setdefault(k, []).append(v)
         
-    with open(f'methods_result_{code_B.stem}.json', 'w') as f:
+    with open(f'methods_result_{code_A.stem}.json', 'w') as f:
         json.dump(method_results, f, indent=2)
 
 
@@ -137,6 +135,6 @@ if __name__ == '__main__':
     calculate_code_similarity(code_A, code_B)
 
     # plot results
-    plot_code_similarity(code_B.stem)
+    plot_code_similarity(code_A.stem)
 
     print("done")
