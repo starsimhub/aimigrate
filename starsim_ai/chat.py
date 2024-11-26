@@ -3,6 +3,7 @@ from langchain_core.output_parsers import JsonOutputParser
 
 from langchain_openai import ChatOpenAI
 from langchain_google_genai import ChatGoogleGenerativeAI
+from langchain_community.llms import VLLM
 
 from enum import Enum
 from typing import Dict, Union, Type
@@ -11,6 +12,26 @@ from pydantic import BaseModel, Field, field_validator
 class LLMModels(Enum):
     OPENAI = {'gpt-3.5-turbo', 'gpt-4o', 'gpt-4o-mini', 'o1-mini', 'o1-preview'}
     GEMINI = {'gemini-1.5-flash', 'gemini-1.5-flash-8b', 'gemini-1.5-pro'}
+    HUGGINGFACE = {'meta-llama/Llama-2-7b-chat-hf', 'meta-llama/Llama-3.2-1B'}
+
+
+class BaseQuery():
+    def __init__(self, model='gpt-3.5-turbo', **kwargs):
+        # Validate and parse the configuration
+        self.config = LLMConfig(model=model)
+
+        # Setup the LLM based on provider
+        if self.config.provider == 'OPENAI':
+            self.llm = ChatOpenAI(model=self.config.model, **kwargs)
+        elif self.config.provider == 'GEMINI':
+            self.llm = ChatGoogleGenerativeAI(model=self.config.model, **kwargs)
+        elif self.config.provider == 'HUGGINGFACE':
+            self.llm = VLLM(
+                model=self.config.model, **kwargs
+            )
+        else:
+            raise ValueError(f"Unsupported provider. Choose {[e.name for e in LLMModels]}")    
+
 
 # Pydantic model for configuration
 class LLMConfig(BaseModel):
@@ -36,19 +57,6 @@ class LLMConfig(BaseModel):
             if model in provider_enum.value:
                 return provider_enum.name
         raise ValueError(f"No provider found for model '{model}'.")
-
-class BaseQuery():
-    def __init__(self, model='gpt-3.5-turbo'):
-        # Validate and parse the configuration
-        self.config = LLMConfig(model=model)
-
-        # Setup the LLM based on provider
-        if self.config.provider == 'OPENAI':
-            self.llm = ChatOpenAI(model=self.config.model)
-        elif self.config.provider == 'GEMINI':
-            self.llm = ChatGoogleGenerativeAI(model=self.config.model)
-        else:
-            raise ValueError(f"Unsupported provider. Choose {[e.name for e in LLMModels]}")
         
         
 class SimpleQuery(BaseQuery):
