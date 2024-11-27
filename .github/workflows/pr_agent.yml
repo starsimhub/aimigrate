@@ -14,9 +14,7 @@ jobs:
     steps:
       - name: PR Agent action step
         id: pragent
-        if: >
-          github.event.action != 'labeled' || 
-          (github.event.action == 'labeled' && github.event.label.name == 'agent-review')        
+        if: (github.event.action == 'labeled' && github.event.label.name == 'agent-review')        
         uses: Codium-ai/pr-agent@main
         env:
           OPENAI_KEY: ${{ secrets.OPENAI_KEY }}
