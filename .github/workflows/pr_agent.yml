@@ -14,9 +14,10 @@ jobs:
     steps:
       - name: Check if label is a tag
         if: ${{ github.event.label.name == 'agent-review' }}
-        run: echo "Tag 'trigger-action' detected. Proceeding with workflow..."    
+        run: echo "Tag 'agent-review' detected. Proceeding with workflow..."    
       - name: PR Agent action step
         id: pragent
+        if: ${{ github.event.label.name == 'agent-review' }}
         uses: Codium-ai/pr-agent@main
         env:
           OPENAI_KEY: ${{ secrets.OPENAI_KEY }}
