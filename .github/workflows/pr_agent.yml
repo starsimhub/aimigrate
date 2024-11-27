@@ -14,7 +14,8 @@ jobs:
     steps:
       - name: Fetch all labels
         id: labels
-        run: echo "Labels: ${{ toJSON(github.event.pull_request.labels) }}"    
+        run: |
+          echo "Labels: ${{ toJSON(github.event.pull_request.labels) }}"
       - name: Check if label wants agent review
         if: |
           contains(toJSON(github.event.pull_request.labels), 'agent-review')
