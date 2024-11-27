@@ -1,5 +1,7 @@
 import pytest
 from starsim_ai.chat import SimpleQuery
+from pydantic import BaseModel, Field
+from starsim_ai.chat import JSONQuery
 
 # FILE: tests/test_chat.py
 
@@ -26,3 +28,23 @@ def test_simplequery_chat_gemini():
     chatter = SimpleQuery(model='gemini-1.5-flash')
     response = chatter("Is a tomato a fruit or a vegetable?")
     response.pretty_print()
+    # FILE: tests/test_chat.py
+
+class Joke(BaseModel):
+    setup: str = Field(description="question to set up a joke")
+    punchline: str = Field(description="answer to resolve the joke")
+
+def test_jsonquery_creation_openai():
+    parser = Joke
+    query = JSONQuery(parser=parser, model='gpt-3.5-turbo')
+    assert query.config.provider == 'OPENAI'
+
+def test_jsonquery_creation_gemini():
+    parser = Joke
+    query = JSONQuery(parser=parser, model='gemini-1.5-flash')
+    assert query.config.provider == 'GEMINI'
+
+def test_jsonquery_creation_invalid_model():
+    parser = Joke
+    with pytest.raises(ValueError, match=r"Model '.*' not found in any provider\."):
+        JSONQuery(parser=parser, model='invalid-model')
