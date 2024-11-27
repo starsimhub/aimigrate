@@ -1,6 +1,6 @@
 on:
   pull_request:
-    types: [labeled]
+    types: [opened, reopened, ready_for_review]
   issue_comment:
 jobs:
   pr_agent_job:
@@ -12,12 +12,8 @@ jobs:
       contents: write
     name: Run pr agent on every pull request, respond to user comments
     steps:
-      - name: Check if label is a tag
-        if: ${{ github.event.label.name == 'agent-review' }}
-        run: echo "Tag 'agent-review' detected. Proceeding with workflow..."    
       - name: PR Agent action step
         id: pragent
-        if: ${{ github.event.label.name == 'agent-review' }}
         uses: Codium-ai/pr-agent@main
         env:
           OPENAI_KEY: ${{ secrets.OPENAI_KEY }}
