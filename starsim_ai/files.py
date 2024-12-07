@@ -1,11 +1,29 @@
 """ files.py
 """
+import os
 import ast
 import re
 import fnmatch
 import tiktoken
 import sciris as sc
 import starsim_ai as sa
+
+def get_python_files(path):
+    """
+    Recursively retrieves all Python files from the specified directory.
+
+    Args:
+        path (str): The root directory to search for Python files.
+
+    Returns:
+        list: A list of file paths to Python files found within the directory.
+    """
+    python_files = []
+    for root, _, files in os.walk(path):
+        for file in files:
+            if file.endswith('.py'):
+                python_files.append(os.path.join(root, file))
+    return python_files
 
 class GitDiff():
     def __init__(self, file_path, include_patterns=None, exclude_patterns=None):
