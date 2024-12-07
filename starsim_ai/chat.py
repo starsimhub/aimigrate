@@ -9,6 +9,8 @@ from enum import Enum
 from typing import Dict, Union, Type
 from pydantic import BaseModel, Field, field_validator
 
+__all__ = ["SimpleQuery", "JSONQuery", "LLMModels"]
+
 class LLMModels(Enum):
     OPENAI = {'gpt-3.5-turbo', 'gpt-4o', 'gpt-4o-mini', 'o1-mini', 'o1-preview'}
     GEMINI = {'gemini-1.5-flash', 'gemini-1.5-flash-8b', 'gemini-1.5-pro'}
