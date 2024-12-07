@@ -1,5 +1,6 @@
 from langchain_core.prompts import PromptTemplate
 from langchain_core.output_parsers import JsonOutputParser
+from langchain.output_parsers import CommaSeparatedListOutputParser
 
 from langchain_openai import ChatOpenAI
 from langchain_google_genai import ChatGoogleGenerativeAI
@@ -9,7 +10,7 @@ from enum import Enum
 from typing import Dict, Union, Type
 from pydantic import BaseModel, Field, field_validator
 
-__all__ = ["SimpleQuery", "JSONQuery", "LLMModels"]
+__all__ = ["SimpleQuery", "JSONQuery", "CSVQuery", "LLMModels"]
 
 class LLMModels(Enum):
     OPENAI = {'gpt-3.5-turbo', 'gpt-4o', 'gpt-4o-mini', 'o1-mini', 'o1-preview'}
@@ -80,6 +81,27 @@ class SimpleQuery(BaseQuery):
 
     def chat(self, user_input):
         response = self.chain.invoke(user_input)
+
+        return response
+    
+class CSVQuery(BaseQuery):
+    def __init__(self, model='gpt-3.5-turbo'):
+        super().__init__(model)
+        self.parser = CommaSeparatedListOutputParser()
+        format_instructions = self.parser.get_format_instructions()
+        # Setup the prompt and chain
+        self.prompt = PromptTemplate(
+            template="{query} \n{format_instructions}",
+            input_variables=["query"],
+            partial_variables={"format_instructions": format_instructions},
+        )
+        self.chain = self.prompt | self.llm | self.parser
+
+    def __call__(self, user_input):
+        return self.chat(user_input)
+
+    def chat(self, user_input):
+        response = self.chain.invoke({"query": user_input})
         return response
     
 class JSONQuery(BaseQuery):
