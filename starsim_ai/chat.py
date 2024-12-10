@@ -10,7 +10,7 @@ from enum import Enum
 from typing import Dict, Union, Type
 from pydantic import BaseModel, Field, field_validator
 
-__all__ = ["SimpleQuery", "JSONQuery", "CSVQuery", "LLMModels"]
+__all__ = ["BaseQuery", "SimpleQuery", "JSONQuery", "CSVQuery", "LLMModels"]
 
 class LLMModels(Enum):
     OPENAI = {'gpt-3.5-turbo', 'gpt-4o', 'gpt-4o-mini', 'o1-mini', 'o1-preview'}
@@ -33,7 +33,10 @@ class BaseQuery():
                 model=self.config.model, **kwargs
             )
         else:
-            raise ValueError(f"Unsupported provider. Choose {[e.name for e in LLMModels]}")    
+            raise ValueError(f"Unsupported provider. Choose {[e.name for e in LLMModels]}")
+        
+    def __call__(self, user_input):
+        return self.llm.invoke(user_input)
 
 
 # Pydantic model for configuration
@@ -66,8 +69,8 @@ class SimpleQuery(BaseQuery):
     """
     A simple query interface to interact with an AI model.
     """
-    def __init__(self, model='gpt-3.5-turbo'):
-        super().__init__(model)
+    def __init__(self, model='gpt-3.5-turbo', **kwargs):
+        super().__init__(model, **kwargs)
 
         # Setup the prompt and chain
         self.prompt = PromptTemplate(
@@ -85,8 +88,8 @@ class SimpleQuery(BaseQuery):
         return response
     
 class CSVQuery(BaseQuery):
-    def __init__(self, model='gpt-3.5-turbo'):
-        super().__init__(model)
+    def __init__(self, model='gpt-3.5-turbo', **kwargs):
+        super().__init__(model, **kwargs)
         self.parser = CommaSeparatedListOutputParser()
         format_instructions = self.parser.get_format_instructions()
         # Setup the prompt and chain
@@ -123,7 +126,7 @@ class JSONQuery(BaseQuery):
     Reference:
     https://python.langchain.com/docs/how_to/output_parser_json/
     """
-    def __init__(self, parser: Union[Type[BaseModel], dict], model: str='gpt-3.5-turbo'):
+    def __init__(self, parser: Union[Type[BaseModel], dict], model: str='gpt-3.5-turbo', **kwargs):
         """
         Initializes the JSONQuery instance.
 
@@ -131,7 +134,7 @@ class JSONQuery(BaseQuery):
             parser (BaseModel, Dict): The structure of the expected JSON response.
             model (str): The name of the model to use. Defaults to 'gpt-3.5-turbo'.
         """        
-        super().__init__(model)
+        super().__init__(model, **kwargs)
 
         # Set up a parser + inject instructions into the prompt template.
         if isinstance(parser, dict):
