@@ -1,3 +1,11 @@
+"""
+Define the different `Query` classes, which include the `chat()` interface.
+"""
+
+from enum import Enum
+from typing import Dict, Union, Type
+from pydantic import BaseModel, Field, field_validator
+
 from langchain_core.prompts import PromptTemplate
 from langchain_core.output_parsers import JsonOutputParser
 from langchain.output_parsers import CommaSeparatedListOutputParser
@@ -6,13 +14,11 @@ from langchain_openai import ChatOpenAI
 from langchain_google_genai import ChatGoogleGenerativeAI
 from langchain_community.llms import VLLM
 
-from enum import Enum
-from typing import Dict, Union, Type
-from pydantic import BaseModel, Field, field_validator
 
-__all__ = ["BaseQuery", "SimpleQuery", "JSONQuery", "CSVQuery", "LLMModels"]
+__all__ = ["Models", "BaseQuery", "SimpleQuery", "JSONQuery", "CSVQuery"]
 
-class LLMModels(Enum):
+
+class Models(Enum):
     OPENAI = {'gpt-3.5-turbo', 'gpt-4o', 'gpt-4o-mini', 'o1-mini', 'o1-preview'}
     GEMINI = {'gemini-1.5-flash', 'gemini-1.5-flash-8b', 'gemini-1.5-pro'}
     HUGGINGFACE = {'meta-llama/Llama-2-7b-chat-hf', 'meta-llama/Llama-3.2-1B'}
@@ -33,7 +39,7 @@ class BaseQuery():
                 model=self.config.model, **kwargs
             )
         else:
-            raise ValueError(f"Unsupported provider. Choose {[e.name for e in LLMModels]}")
+            raise ValueError(f"Unsupported provider. Choose {[e.name for e in Models]}")
         
     def __call__(self, user_input):
         return self.llm.invoke(user_input)
@@ -51,7 +57,7 @@ class LLMConfig(BaseModel):
     @field_validator("model")
     @classmethod
     def validate_model(cls, model):
-        for provider in LLMModels:
+        for provider in Models:
             if model in provider.value:
                 return model
         raise ValueError(f"Model '{model}' not found in any provider.")
@@ -59,7 +65,7 @@ class LLMConfig(BaseModel):
     @field_validator("provider")
     @classmethod
     def set_provider(cls, model):
-        for provider_enum in LLMModels:
+        for provider_enum in Models:
             if model in provider_enum.value:
                 return provider_enum.name
         raise ValueError(f"No provider found for model '{model}'.")
@@ -86,7 +92,8 @@ class SimpleQuery(BaseQuery):
         response = self.chain.invoke(user_input)
 
         return response
-    
+
+
 class CSVQuery(BaseQuery):
     def __init__(self, model='gpt-3.5-turbo', **kwargs):
         super().__init__(model, **kwargs)
@@ -106,7 +113,8 @@ class CSVQuery(BaseQuery):
     def chat(self, user_input):
         response = self.chain.invoke({"query": user_input})
         return response
-    
+
+
 class JSONQuery(BaseQuery):
     """
     A query interface that returns the response in JSON format.

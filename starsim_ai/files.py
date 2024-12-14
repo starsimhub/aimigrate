@@ -1,4 +1,5 @@
-""" files.py
+"""
+Parse the files and folders, including the git diff 
 """
 import os
 import ast
@@ -8,6 +9,7 @@ import tiktoken
 import sciris as sc
 import starsim_ai as sa
 import subprocess
+
 
 def get_python_files(path, gitignore=False):
     """
@@ -34,27 +36,30 @@ def get_python_files(path, gitignore=False):
                     python_files.append(os.path.join(root, file))
     return python_files
 
-class GitDiff():
+
+class GitDiff:
+    """
+    Create and parse the git diff
+    """
+
     def __init__(self, file_path, include_patterns=None, exclude_patterns=None):
 
         self.include_patterns = ["*.py"] if include_patterns is None else include_patterns
         self.exclude_patterns = ["docs/*"] if exclude_patterns is None else exclude_patterns
 
         self.diffs = self.parse_git_diff(file_path, include_patterns=self.include_patterns, exclude_patterns=self.exclude_patterns)
+        return
 
     def summarize(self):
-        '''
-        Summarize the diffs
-        '''
+        """ Summarize the diffs """
         diffs = self.diffs
         print(f"Number of files found: {len(diffs)}")
         print(f"Number of hunks: {sum([len(diff['hunks']) for diff in diffs])}")
         print(f"Names of files found: {[diff['file'] for diff in diffs]}")
+        return
 
     def get_diff_string(self, file=None):
-        '''
-        Get the diff string (optionally for a file)
-        '''
+        """ Get the diff string (optionally for a file) """
         if file is not None:
             return ''.join([''.join(diff['hunks']) for diff in self.diffs if diff["file"] == file])
         else:
@@ -62,22 +67,20 @@ class GitDiff():
 
 
     def count_all_tokens(self, model="gpt-4o"):
-        '''
-        Count the total number of tokens in the diff (all hunks)
-        '''
+        """ Count the total number of tokens in the diff (all hunks) """
         encoding = tiktoken.encoding_for_model(model)
         return len(encoding.encode(self.get_diff_string()))
 
     def print_file_hunks(self, file):
-        '''
+        """
         Print all hunks for a file
-        '''
-
+        """
         for diff in self.diffs:
-            if diff["file"] == file:
+            if diff.file == file:
                 print(f"All hunks for {file}")
-                for hunk in diff['hunks']:
+                for hunk in diff.hunks:
                     print(f"{hunk}\n")
+        return
 
     @staticmethod
     def parse_git_diff(diff_file_path, include_patterns=None, exclude_patterns=None):
@@ -139,9 +142,11 @@ class GitDiff():
         
         return diffs
 
-class PythonCode():
-    # TODO: deal with functions
 
+class PythonCode():
+    """
+    Parse Python code into classes and methods
+    """
     def __init__(self, file_path: str):
         self.code_lines = None
         self.classes = None
