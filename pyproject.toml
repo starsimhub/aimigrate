@@ -2,7 +2,7 @@
 name = "starsim_ai"
 version = "0.1.0"
 description = "Tool for integrating LLMs with starsim"
-authors = ["Your Name <you@example.com>"]
+authors = ["Katherine Rosenfeld <katherine.rosenfeld@gatesfoundation.org>", "Cliff Kerr <cliff@starsim.org>"]
 readme = "README.md"
 
 [tool.poetry.dependencies]
