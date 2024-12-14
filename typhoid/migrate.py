@@ -2,7 +2,7 @@
 Migrate Typhoidsim files from v1.0.3 to v2.2.0. 
 """
 import os
-import json
+import re
 import tiktoken
 import sciris as sc
 import starsim_ai as sa
@@ -10,7 +10,7 @@ import starsim_ai as sa
 # change cwd to the directory of this file
 os.chdir(sc.thisdir(__file__))
 
-def migrate(code_file, model='gpt-4o', diff_file='starsim_v1.0.3-v2.2.0.diff', report_token_count=False):
+def migrate(code_file, model='gpt-4o', diff_file='starsim_v1.0.3-v2.2.0.diff', out_dir='migrated', report_token_count=False):
     
     code_file = sc.path(code_file)
 
@@ -28,7 +28,7 @@ def migrate(code_file, model='gpt-4o', diff_file='starsim_v1.0.3-v2.2.0.diff', r
     chatter = sa.SimpleQuery(model=model)
 
     # encoder (for counting tokens)
-    encoder = tiktoken.encoding_for_model("gpt-4o")
+    encoder = tiktoken.encoding_for_model("gpt-4o") # CK: or "model"?
         
     # the prompt template
     prompt_template = '''
@@ -47,24 +47,38 @@ def migrate(code_file, model='gpt-4o', diff_file='starsim_v1.0.3-v2.2.0.diff', r
     code_string = python_code.get_code_string()
 
     prompt = prompt_template.format(git_diff.get_diff_string(), code_string) # Number of tokens 60673
+    n_tokens = len(encoder.encode(prompt))
     if report_token_count:
-        print(f"Number of tokens {len(encoder.encode(prompt))}")
+        print(f"Number of tokens {n_tokens}")
 
-    # $$
+    # Do the thing! ($$)
     response = chatter(prompt)
 
-    # write to file (process later)
-    outfile = f"results/{code_file.stem}_migrated.json"
-    sc.savejson(outfile, response.to_json())
+    # Extract the result
+    json = response.to_json()
+    result_string = json['kwargs']['content']
+    match_pattern = re.compile(r'```python(.*?)```', re.DOTALL)
+    code_match = match_pattern.search(result_string)
+    code = code_match.group(1)
+
+    # Write to file
+    outfile = f"{out_dir}/{code_file}"
+    sc.savetext(outfile, code)
+
+    return n_tokens
 
 
 if __name__ == "__main__":
 
     # Settings
-    code_file = 'typhoidsim/environment.py'
     models = ['gpt-4o-mini', 'gpt-4o', 'gemini-1.5-flash', 'gemini-1.5-flash-8b']
-    model = models[1]
 
     # Do the migration
-    with sc.timer():
-        migrate(code_file, model)
+    T = sc.timer()
+
+    migrate(
+        code_file = 'typhoidsim/environment.py',
+        model = models[1],
+    )
+
+    T.toc()
