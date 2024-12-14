@@ -1,5 +1,5 @@
 """
-Parse the files and folders, including the git diff 
+Parse the files and folders, including the git diff
 """
 import os
 import ast
@@ -42,12 +42,12 @@ class GitDiff:
     Create and parse the git diff
     """
 
-    def __init__(self, file_path, include_patterns=None, exclude_patterns=None):
+    def __init__(self, file, include_patterns=None, exclude_patterns=None):
 
         self.include_patterns = ["*.py"] if include_patterns is None else include_patterns
         self.exclude_patterns = ["docs/*"] if exclude_patterns is None else exclude_patterns
 
-        self.diffs = self.parse_git_diff(file_path, include_patterns=self.include_patterns, exclude_patterns=self.exclude_patterns)
+        self.diffs = self.parse_git_diff(file, include_patterns=self.include_patterns, exclude_patterns=self.exclude_patterns)
         return
 
     def summarize(self):
@@ -83,7 +83,7 @@ class GitDiff:
         return
 
     @staticmethod
-    def parse_git_diff(diff_file_path, include_patterns=None, exclude_patterns=None):
+    def parse_git_diff(file, include_patterns=None, exclude_patterns=None):
         """
         Parses a git diff file and extracts diffs for specified files, splitting hunks by '@@'.
 
@@ -97,49 +97,51 @@ class GitDiff:
         diffs = []
         current_file = None
         current_hunks = []
-        
-        with open(diff_file_path, 'r') as file:
-            for line in file:
-                # Match lines that indicate a new file's diff starts
-                file_match = re.match(r'^diff --git a/(.+?) b/', line)
-                hunk_start_match = re.match(r'^@@', line)
-                
-                if file_match:
-                    # Save the previous file and hunks if applicable
-                    if current_file and current_hunks:
-                        current_hunks.append(''.join(current_hunks.pop()))
-                        diffs.append(sc.objdict({"file": current_file, "hunks": current_hunks}))
-                    
-                    # Start a new file and check if it matches any pattern
-                    current_file = file_match.group(1)
-                    if include_patterns and not any(fnmatch.fnmatch(current_file, pattern) for pattern in include_patterns):
-                        # Skip files that don't match any include pattern
-                        current_file = None
-                        current_hunks = []
-                    elif exclude_patterns and any(fnmatch.fnmatch(current_file, pattern) for pattern in exclude_patterns):
-                        # Skip files that match any exclude pattern
-                        current_file = None
-                        current_hunks = []                    
-                    else:
-                        current_hunks = []  # Reset hunks for the new file
-                
-                elif hunk_start_match:
-                    # If there's an ongoing hunk, save it as a new entry before starting a new hunk
-                    if current_file and current_hunks and current_hunks[-1]:
-                        current_hunks.append(''.join(current_hunks.pop()))
-                    
-                    # Start a new hunk for the current file
-                    current_hunks.append([line])
-                
-                elif current_hunks:
-                    # Append line to current hunk if in a hunk
-                    current_hunks[-1].append(line)
-            
-            # Save the last file and hunks if present
-            if current_file and current_hunks:
-                current_hunks.append(''.join(current_hunks.pop()))
-                diffs.append(sc.objdict({"file": current_file, "hunks": current_hunks}))
-        
+
+        if '\n' not in file: # TODO: check if this works?
+            file = open(file, 'r')
+
+        for line in file:
+            # Match lines that indicate a new file's diff starts
+            file_match = re.match(r'^diff --git a/(.+?) b/', line)
+            hunk_start_match = re.match(r'^@@', line)
+
+            if file_match:
+                # Save the previous file and hunks if applicable
+                if current_file and current_hunks:
+                    current_hunks.append(''.join(current_hunks.pop()))
+                    diffs.append(sc.objdict({"file": current_file, "hunks": current_hunks}))
+
+                # Start a new file and check if it matches any pattern
+                current_file = file_match.group(1)
+                if include_patterns and not any(fnmatch.fnmatch(current_file, pattern) for pattern in include_patterns):
+                    # Skip files that don't match any include pattern
+                    current_file = None
+                    current_hunks = []
+                elif exclude_patterns and any(fnmatch.fnmatch(current_file, pattern) for pattern in exclude_patterns):
+                    # Skip files that match any exclude pattern
+                    current_file = None
+                    current_hunks = []
+                else:
+                    current_hunks = []  # Reset hunks for the new file
+
+            elif hunk_start_match:
+                # If there's an ongoing hunk, save it as a new entry before starting a new hunk
+                if current_file and current_hunks and current_hunks[-1]:
+                    current_hunks.append(''.join(current_hunks.pop()))
+
+                # Start a new hunk for the current file
+                current_hunks.append([line])
+
+            elif current_hunks:
+                # Append line to current hunk if in a hunk
+                current_hunks[-1].append(line)
+
+        # Save the last file and hunks if present
+        if current_file and current_hunks:
+            current_hunks.append(''.join(current_hunks.pop()))
+            diffs.append(sc.objdict({"file": current_file, "hunks": current_hunks}))
+
         return diffs
 
 
@@ -191,5 +193,5 @@ class PythonCode():
                 if c['name'] == name:
                     return ''.join(self.code_lines[c['lineno']-1:c['end_lineno']+1])
 
-    
+
 
