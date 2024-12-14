@@ -2,16 +2,28 @@
 """
 import ast
 import re
+import subprocess
 import tomllib
 import fnmatch
 import tiktoken
+import pydantic
 import sciris as sc
 import starsim_ai as sa
 from pathlib import Path
+from pydantic import BaseModel, Field
+
+# Pydantic model for configuration
+class GitDiffConfig(BaseModel):
+    starsim: str = Field(..., description="The directory of starsim")
+    code: str = Field(..., description="The directory of the code for migration")
+    commit1: str = Field(..., description="Source SHA")
+    commit2: str = Field(..., description="Target SHA")
+    use_patience: bool = Field(True, description="Use patience algorithm")
 
 class GitDiff():
     def __init__(self, file_path, include_patterns=None, exclude_patterns=None, ):
 
+        self.config = None
         self.include_patterns = ["*.py"] if include_patterns is None else include_patterns
         self.exclude_patterns = ["docs/*"] if exclude_patterns is None else exclude_patterns
 
@@ -34,12 +46,20 @@ class GitDiff():
             toml_file (str): Path to the TOML file.
 
         Sets:
-            self.ss_dir (Path): The resolved path to the code directory specified in the TOML file.
+            self.config (GitDiffConfig)
         """
         # open the file
         with open(toml_file, 'rb') as f:
             t = tomllib.load(f)
-        self.ss_dir = Path(t['info']['code']).resolve()
+        self.config = GitDiffConfig(**t['info'])
+
+    def generate_full_diff(self):
+        """
+        Generate the full diff between two commits.
+        """
+        with sa.utils.TemporaryDirectoryChange(self.config.starsim):
+            cmd = [s for s in """git diff --patience {} {}""".format(self.config.commit1, self.config.commit2).split()]
+            self.full_diff = subprocess.run(cmd, capture_output=True, text=True, cwd=self.config.starsim)
 
     def summarize(self):
         '''
