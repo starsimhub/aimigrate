@@ -2,18 +2,26 @@
 """
 import ast
 import re
+import tomllib
 import fnmatch
 import tiktoken
 import sciris as sc
 import starsim_ai as sa
+from pathlib import Path
 
 class GitDiff():
-    def __init__(self, file_path, include_patterns=None, exclude_patterns=None):
+    def __init__(self, file_path, include_patterns=None, exclude_patterns=None, ):
 
         self.include_patterns = ["*.py"] if include_patterns is None else include_patterns
         self.exclude_patterns = ["docs/*"] if exclude_patterns is None else exclude_patterns
 
         self.diffs = self.parse_git_diff(file_path, include_patterns=self.include_patterns, exclude_patterns=self.exclude_patterns)
+
+    def load_toml(self, toml_file):
+        # open the file
+        with open(toml_file,'rb') as f:
+            t = tomllib.load(f)
+        self.ss_dir = Path(t['info']['code']).resolve()
 
     def summarize(self):
         '''
