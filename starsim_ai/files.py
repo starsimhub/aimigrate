@@ -17,9 +17,27 @@ class GitDiff():
 
         self.diffs = self.parse_git_diff(file_path, include_patterns=self.include_patterns, exclude_patterns=self.exclude_patterns)
 
-    def load_toml(self, toml_file):
+    def load_toml(self, toml_file: str):
+        """
+        Load configuration from a TOML file.
+
+        The TOML file should have the following structure:
+        
+        [info]
+        code='/path/to/code'
+        starsim='/path/to/starsim'
+        commit1='commit_hash_1'
+        commit2='commit_hash_2'
+        use_patience=True
+
+        Args:
+            toml_file (str): Path to the TOML file.
+
+        Sets:
+            self.ss_dir (Path): The resolved path to the code directory specified in the TOML file.
+        """
         # open the file
-        with open(toml_file,'rb') as f:
+        with open(toml_file, 'rb') as f:
             t = tomllib.load(f)
         self.ss_dir = Path(t['info']['code']).resolve()
 
@@ -167,5 +185,5 @@ class PythonCode():
                 if c['name'] == name:
                     return ''.join(self.code_lines[c['lineno']-1:c['end_lineno']+1])
 
-    
+
 
