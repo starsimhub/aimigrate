@@ -23,7 +23,7 @@ Refactored code:
 '''
 
 
-class Migrate:
+class Migrate(sc.prettyobj):
     """
     Handle all steps of code migration
 
@@ -70,7 +70,7 @@ class Migrate:
         self.library = library
         self.v_from = v_from
         self.v_to = v_to
-        self.diff_fie = diff_file
+        self.diff_file = diff_file
         self.diff = diff
         self.model = model
         self.include = sc.ifelse(include, default_include)
@@ -101,7 +101,7 @@ class Migrate:
     def log(self, string):
         """ Print if self.verbose is True """
         if self.verbose:
-            print(string)
+            sc.printgreen(string)
         return
 
     def parse_library(self):
@@ -141,10 +141,17 @@ class Migrate:
     def parse_source(self):
         """ Find the supplied files and parse them """
         self.log('Parsing source files')
+        self.source = sc.path(self.source)
+
+        self.dest = sc.path(self.dest)
         self.source_files = ssai.get_python_files(self.source)
         if not len(self.source_files):
             errormsg = f'Could not find any Python files to migrate in {self.source}'
             raise FileNotFoundError(errormsg)
+
+        # If a single file was supplied, get the parent folder
+        if self.source.is_file():
+            self.source = self.source.parent
 
         for file in self.source_files:
             try:
@@ -156,6 +163,7 @@ class Migrate:
             except Exception as E:
                 errormsg = f'Could not parse {file}: {E}'
                 self.errors.append(errormsg)
+                print(errormsg)
 
         return
 
@@ -189,6 +197,8 @@ class Migrate:
 
         # Write to file
         if self.save:
+            self.log(f'Saving to {dest_file}')
+            sc.makefilepath(dest_file, makedirs=True)
             sc.savetext(dest_file, code)
         return
 
@@ -201,7 +211,7 @@ class Migrate:
     def run(self):
         """ Run all steps of the process """
         self.T = sc.timer()
-        self.parse_starsim()
+        self.parse_library()
         self.make_diff()
         self.parse_diff()
         self.parse_source()

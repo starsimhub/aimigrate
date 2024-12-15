@@ -21,19 +21,25 @@ def get_python_files(path, gitignore=False):
     Returns:
         list: A list of file paths to Python files found within the directory.
     """
-    python_files = []
-    if gitignore:
-        with sa.utils.TemporaryDirectoryChange(path):
-           files = subprocess.check_output("git ls-files", shell=True).splitlines()
-           for file in files:
-                decoded = file.decode()
-                if decoded.endswith('.py'):
-                     python_files.append(decoded)
+    if isinstance(path, str):
+        path = sc.path(path)
+
+    if path.suffix == '.py':
+        python_files = [path]
     else:
-        for root, _, files in os.walk(path):
-            for file in files:
-                if file.endswith('.py'):
-                    python_files.append(os.path.join(root, file))
+        python_files = []
+        if gitignore:
+            with sa.utils.TemporaryDirectoryChange(path):
+               files = subprocess.check_output("git ls-files", shell=True).splitlines()
+               for file in files:
+                    decoded = file.decode()
+                    if decoded.endswith('.py'):
+                         python_files.append(decoded)
+        else:
+            for root, _, files in os.walk(path):
+                for file in files:
+                    if file.endswith('.py'):
+                        python_files.append(os.path.join(root, file))
     python_files = [sc.path(file) for file in python_files]
     return python_files
 
