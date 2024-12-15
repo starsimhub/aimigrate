@@ -34,6 +34,7 @@ def get_python_files(path, gitignore=False):
             for file in files:
                 if file.endswith('.py'):
                     python_files.append(os.path.join(root, file))
+    python_files = [sc.path(file) for file in python_files]
     return python_files
 
 

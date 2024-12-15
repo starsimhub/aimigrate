@@ -148,9 +148,11 @@ class Migrate:
 
         for file in self.source_files:
             try:
+                dest_file = sc.path(self.dest) / file.relative_to(self.source)
                 python_code = ssai.PythonCode(file)
                 self.python_codes.append(python_code)
                 self.code_strings.append(python_code.get_code_string())
+                self.dest_files.append(dest_file)
             except Exception as E:
                 errormsg = f'Could not parse {file}: {E}'
                 self.errors.append(errormsg)
@@ -171,16 +173,14 @@ class Migrate:
         self.log(f"Number of tokens {n_tokens}")
         return prompt
 
-
     def run_query(self, prompt):
         self.log('Running query...')
         response = self.chatter(prompt)
         self.responses.append(response)
         return response
 
-    def parse_response(self, response):
+    def parse_response(self, response, dest_file):
         self.log('Parsing response...')
-        # Extract the result
         json = response.to_json()
         result_string = json['kwargs']['content']
         match_pattern = re.compile(r'```python(.*?)```', re.DOTALL)
@@ -189,14 +189,13 @@ class Migrate:
 
         # Write to file
         if self.save:
-            outfile = f"{self.dest}/{code_file}"
-            sc.savetext(outfile, code)
+            sc.savetext(dest_file, code)
         return
 
-    def run_single(self, code_string):
+    def run_single(self, code_string, dest_file):
         prompt = self.make_prompt(code_string)
         response = self.run_query(prompt)
-        self.parse_response(response)
+        self.parse_response(response, dest_file)
         return
 
     def run(self):
@@ -207,8 +206,8 @@ class Migrate:
         self.parse_diff()
         self.parse_source()
         self.make_chatter()
-        for code_string in self.code_strings: # TODO: run in parallel
-            self.run_single(code_string)
+        for code_string, dest_file in zip(self.code_strings, self.dest_files): # TODO: run in parallel
+            self.run_single(code_string, dest_file)
         self.T.toc()
         return
 
