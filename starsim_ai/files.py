@@ -98,8 +98,10 @@ class GitDiff:
         current_file = None
         current_hunks = []
 
-        if '\n' not in file: # TODO: check if this works?
-            file = open(file, 'r')
+        # In case a filename is provided instead of the file contents
+        if not isinstance(file, str) or '\n' not in file:
+            with open(file, 'r') as f:
+                file = f.readlines()
 
         for line in file:
             # Match lines that indicate a new file's diff starts
@@ -155,10 +157,12 @@ class PythonCode():
 
         self.from_file(file_path)
         self.set_classes()
+        return
 
     def from_file(self, file_path):
         with open(file_path, 'r') as file:
             self.code_lines = file.readlines()
+        return
 
     def get_code_string(self):
         return ''.join(self.code_lines)
@@ -168,6 +172,7 @@ class PythonCode():
         visitor = sa.ClassVisitor()
         visitor.visit(tree)
         self.classes = visitor.classes
+        return
 
     def get_class_methods(self, name):
         # BUG: how does this work for methods with the same name?
