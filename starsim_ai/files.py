@@ -8,10 +8,8 @@ import subprocess
 import tomllib
 import fnmatch
 import tiktoken
-import pydantic
 import sciris as sc
 import starsim_ai as sa
-from pathlib import Path
 from pydantic import BaseModel, Field
 
 
@@ -51,7 +49,7 @@ def get_python_files(path, gitignore=False):
 
 # Pydantic model for configuration
 class GitDiffConfig(BaseModel):
-    starsim: str = Field(..., description="The directory of starsim")
+    starsim: str = Field(..., description="The directory of starsim") # TOOD: make general for any library
     code: str = Field(..., description="The directory of the code for migration")
     commit1: str = Field(..., description="Source SHA")
     commit2: str = Field(..., description="Target SHA")
@@ -61,15 +59,16 @@ class GitDiff():
     """
     Create and parse the git diff
     """
-    def __init__(self, file_path, include_patterns=None, exclude_patterns=None, ):
+    def __init__(self, full_diff=None, file_path=None, include_patterns=None, exclude_patterns=None, ):
 
         self.config = None
         self.full_diff = None
         self.include_patterns = ["*.py"] if include_patterns is None else include_patterns
         self.exclude_patterns = ["docs/*"] if exclude_patterns is None else exclude_patterns
 
-        self.load_toml(file_path)
-        self.generate_full_diff()
+        if file_path:
+            self.load_toml(file_path)
+            self.generate_full_diff()
         self.diffs = self.parse_git_diff(include_patterns=self.include_patterns, exclude_patterns=self.exclude_patterns)
         return
 
@@ -78,7 +77,7 @@ class GitDiff():
         Load configuration from a TOML file.
 
         The TOML file should have the following structure:
-        
+
         [info]
         code='/path/to/code'
         starsim='/path/to/starsim'
@@ -152,22 +151,26 @@ class GitDiff():
         current_hunks = []
 
         if diff_file_path is not None:
-            with open(diff_file_path, 'r') as file:
-                file = file.readlines()
+            # In case a filename is provided instead of the file contents
+            if not isinstance(diff_file_path, str) or '\n' not in diff_file_path:
+                with open(diff_file_path, 'r') as f:
+                    file = f.readlines()
+            else:
+                file = diff_file_path
         else:
             file = self.full_diff.split('\n')
-    
+
         for line in file:
             # Match lines that indicate a new file's diff starts
             file_match = re.match(r'^diff --git a/(.+?) b/', line)
             hunk_start_match = re.match(r'^@@', line)
-            
+
             if file_match:
                 # Save the previous file and hunks if applicable
                 if current_file and current_hunks:
                     current_hunks.append(''.join(current_hunks.pop()))
                     diffs.append(sc.objdict({"file": current_file, "hunks": current_hunks}))
-                
+
                 # Start a new file and check if it matches any pattern
                 current_file = file_match.group(1)
                 if include_patterns and not any(fnmatch.fnmatch(current_file, pattern) for pattern in include_patterns):
@@ -177,27 +180,27 @@ class GitDiff():
                 elif exclude_patterns and any(fnmatch.fnmatch(current_file, pattern) for pattern in exclude_patterns):
                     # Skip files that match any exclude pattern
                     current_file = None
-                    current_hunks = []                    
+                    current_hunks = []
                 else:
                     current_hunks = []  # Reset hunks for the new file
-            
+
             elif hunk_start_match:
                 # If there's an ongoing hunk, save it as a new entry before starting a new hunk
                 if current_file and current_hunks and current_hunks[-1]:
                     current_hunks.append(''.join(current_hunks.pop()))
-                
+
                 # Start a new hunk for the current file
                 current_hunks.append([line])
-            
+
             elif current_hunks:
                 # Append line to current hunk if in a hunk
                 current_hunks[-1].append(line)
-        
+
         # Save the last file and hunks if present
         if current_file and current_hunks:
             current_hunks.append(''.join(current_hunks.pop()))
             diffs.append(sc.objdict({"file": current_file, "hunks": current_hunks}))
-    
+
         return diffs
 
 
