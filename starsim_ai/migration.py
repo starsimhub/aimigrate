@@ -203,6 +203,7 @@ class Migrate(sc.prettyobj):
         return
 
     def run_single(self, code_string, dest_file):
+        sc.heading(f'Migrating {dest_file}')
         prompt = self.make_prompt(code_string)
         response = self.run_query(prompt)
         self.parse_response(response, dest_file)
@@ -210,6 +211,7 @@ class Migrate(sc.prettyobj):
 
     def run(self):
         """ Run all steps of the process """
+        self.log(f'Migrating: {self.source_files}')
         self.T = sc.timer()
         self.parse_library()
         self.make_diff()
