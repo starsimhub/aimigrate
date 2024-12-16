@@ -8,7 +8,7 @@ import sciris as sc
 import starsim_ai as ssai
 
 default_include = ["*.py"]
-default_exclude = ["docs/*", "__init__.py", "setup.py"]
+default_exclude = ["docs/*", "tests/*", "__init__.py", "setup.py"]
 
 default_base_prompt = '''
 Here is the diff information for an update to the starsim (ss) package:

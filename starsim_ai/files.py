@@ -110,7 +110,7 @@ class GitDiff:
             with open(file, 'r') as f:
                 file = f.readlines()
 
-        for line in file:
+        for line in file.splitlines():
             # Match lines that indicate a new file's diff starts
             file_match = re.match(r'^diff --git a/(.+?) b/', line)
             hunk_start_match = re.match(r'^@@', line)
