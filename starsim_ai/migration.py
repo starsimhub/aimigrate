@@ -128,12 +128,12 @@ class Migrate(sc.prettyobj):
                 self.diff = sc.runcommand(f'git diff {self.v_from} {self.v_to}')
         return
 
-    def parse_diff(self):
+    def parse_diff(self, encoding='gpt-4o'):
         """ Parse the diff into the different pieces """
         self.log('Parsing the diff')
         self.git_diff = ssai.GitDiff(self.diff, include_patterns=self.include, exclude_patterns=self.exclude)
         self.git_diff.summarize() # summarize
-        self.n_tokens = self.git_diff.count_all_tokens(model=self.model)
+        self.n_tokens = self.git_diff.count_all_tokens(model=encoding) # NB: not implemented for all models
         if self.verbose:
             print(f'Number of tokens {self.n_tokens}')
         return
@@ -167,10 +167,10 @@ class Migrate(sc.prettyobj):
 
         return
 
-    def make_chatter(self):
+    def make_chatter(self, encoding='gpt-4o'):
         """ Create the LLM agent """
         self.log('Creating agent...')
-        self.encoder = tiktoken.encoding_for_model(self.model) # encoder (for counting tokens)
+        self.encoder = tiktoken.encoding_for_model(encoding) # encoder (for counting tokens)
         self.chatter = ssai.SimpleQuery(model=self.model)
         return
 
@@ -211,13 +211,13 @@ class Migrate(sc.prettyobj):
 
     def run(self):
         """ Run all steps of the process """
-        self.log(f'Migrating: {self.source_files}')
         self.T = sc.timer()
         self.parse_library()
         self.make_diff()
         self.parse_diff()
         self.parse_source()
         self.make_chatter()
+        self.log(f'Migrating: {self.source_files}')
         for code_string, dest_file in zip(self.code_strings, self.dest_files): # TODO: run in parallel
             self.run_single(code_string, dest_file)
         self.T.toc()
