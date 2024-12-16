@@ -1,0 +1,21 @@
+[tool.poetry]
+name = "starsim_ai"
+version = "0.1.0"
+description = "Tool for integrating LLMs with starsim"
+authors = ["Your Name <you@example.com>"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.10"
+langchain-openai = "^0.2.9"
+scipy = "^1.14.1"
+sciris = "^3.2.0"
+langchain = "^0.3.7"
+pytest = "^8.3.3"
+langchain-google-genai = "^2.0.5"
+vllm = "^0.6.4.post1"
+langchain-community = "^0.3.8"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
