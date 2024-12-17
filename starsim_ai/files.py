@@ -11,36 +11,34 @@ import starsim_ai as sa
 import subprocess
 
 
-def get_python_files(path, gitignore=False):
+def get_python_files(source_dir, gitignore=False):
     """
     Recursively retrieves all Python files from the specified directory.
 
     Args:
-        path (str): The root directory to search for Python files.
+        source_dir (str): The root directory to search for Python files.
 
     Returns:
         list: A list of file paths to Python files found within the directory.
     """
-    if isinstance(path, str):
-        path = sc.path(path)
+    if isinstance(source_dir, str):
+        source_dir = sc.path(source_dir)
 
-    if path.suffix == '.py':
-        python_files = [path]
+    python_files = []
+    if gitignore:
+        with sa.utils.TemporaryDirectoryChange(source_dir):
+            files = subprocess.check_output("git ls-files", shell=True).splitlines()
+            for file in files:
+                decoded = file.decode()
+                if decoded.endswith('.py'):
+                        python_files.append(decoded)
     else:
-        python_files = []
-        if gitignore:
-            with sa.utils.TemporaryDirectoryChange(path):
-               files = subprocess.check_output("git ls-files", shell=True).splitlines()
-               for file in files:
-                    decoded = file.decode()
-                    if decoded.endswith('.py'):
-                         python_files.append(decoded)
-        else:
-            for root, _, files in os.walk(path):
-                for file in files:
-                    if file.endswith('.py'):
-                        python_files.append(os.path.join(root, file))
-    python_files = [sc.path(file) for file in python_files]
+        for root, _, files in os.walk(source_dir):
+            for file in files:
+                if file.endswith('.py'):
+                    python_files.append(os.path.join(root, file))
+    
+    python_files = [sc.path(file).relative_to(source_dir) for file in python_files]
     return python_files
 
 

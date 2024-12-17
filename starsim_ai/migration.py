@@ -29,17 +29,60 @@ class CodeFile(sc.prettyobj):
     """
     A class to hold the original and migrated code
     """
-    def __init__(self, source_dir, source, dest):
-        self.source_dir = source_dir
+    def __init__(self, source, dest, process=True):
         self.source = source
         self.dest = dest
-        self.orig_code = None
+        self.python_code = None
+        self.orig_str = None
         self.prompt = None
+        self.chatter = None
+        self.n_tokens = None
         self.response = None
-        self.new_code = None
+        self.new_str = None
         self.error = None
+        if process:
+            self.process_code()
+        return
+    
+    def process_code(self):
+        """ Parse the Python file into a string """
+        self.python_code = ssai.PythonCode(self.source)
+        self.orig_str = self.python_code.get_code_string()
+        return
+    
+    def make_prompt(self, base_prompt, diff_string):
+        """ Create the prompt for the LLM """
+        self.prompt = base_prompt.format(diff_string, self.orig_str)
+        self.n_tokens = len(encoder.encode(self.prompt)) # Not strictly needed, but useful to know
+        return
+    
+    def run_query(self, chatter):
+        """ Where everything happens!! """
+        self.response = chatter(self.prompt)
+        return
+    
+    def parse_response(self):
+        """ Extract code from the response object """
+        json = self.response.to_json()
+        result_string = json['kwargs']['content']
+        match_pattern = re.compile(r'```python(.*?)```', re.DOTALL)
+        code_match = match_pattern.search(result_string)
+        self.new_str = code_match.group(1)
         return
 
+    def run(self, chatter, save=True):
+        """ Run the migration, using the supplied LLM (chatter) """
+        self.run_query(chatter)
+        self.parse_response()
+        if save:
+            self.save()
+        return
+
+    def save(self):
+        """ Write to file """
+        sc.makefilepath(self.dest, makedirs=True)
+        sc.savetext(self.dest, self.new_str)
+        return
 
 
 class Migrate(sc.prettyobj):
@@ -114,10 +157,11 @@ class Migrate(sc.prettyobj):
             self.run()
         return
 
-    def log(self, string):
+    def log(self, string, color='green'):
         """ Print if self.verbose is True """
         if self.verbose:
-            sc.printgreen(string)
+            printfunc = dict(default=print, red=sc.printred, green=sc.printgreen, blue=sc.printblue)[color]
+            printfunc(string)
         return
 
     def parse_library(self):
@@ -155,28 +199,24 @@ class Migrate(sc.prettyobj):
             print(f'Number of tokens {self.n_tokens}')
         return
 
-    def parse_source(self):
+    def parse_sources(self):
         """ Find the supplied files and parse them """
         self.log('Parsing source files')
-        self.source = sc.path(self.source)
-
-        self.dest = sc.path(self.dest)
-        self.source_files = ssai.get_python_files(self.source)
+        if self.source_files is None:
+            self.source_files = ssai.get_python_files(self.source_dir)
+        else:
+            self.source_files = sc.tolist(self.source_files)
+        
         if not len(self.source_files):
-            errormsg = f'Could not find any Python files to migrate in {self.source}'
+            errormsg = f'Could not find any Python files to migrate in {self.source_dir}'
             raise FileNotFoundError(errormsg)
-
-        # If a single file was supplied, get the parent folder
-        if self.source.is_file():
-            self.source = self.source.parent
 
         for file in self.source_files:
             try:
-                dest_file = sc.path(self.dest) / file.relative_to(self.source)
-                python_code = ssai.PythonCode(file)
-                self.python_codes.append(python_code)
-                self.code_strings.append(python_code.get_code_string())
-                self.dest_files.append(dest_file)
+                source = self.source_dir / file
+                dest = self.dest_dir / file
+                code_file = CodeFile(source=source, dest=dest) # Actually do the processing
+                self.code_files.append(code_file)
             except Exception as E:
                 errormsg = f'Could not parse {file}: {E}'
                 self.errors.append(errormsg)
@@ -190,49 +230,28 @@ class Migrate(sc.prettyobj):
         self.encoder = tiktoken.encoding_for_model(encoding) # encoder (for counting tokens)
         self.chatter = ssai.SimpleQuery(model=self.model)
         return
+    
+    def make_prompts(self):
+        diff_string = self.git_diff.get_diff_string()
+        for code_file in self.code_files:
+            code_file.make_prompt(self.base_prompt, diff_string, encoder=self.encoder)
+        return
 
-    def make_prompt(self, code_string):
-        prompt = self.base_prompt.format(self.git_diff.get_diff_string(), code_string)
-        self.prompts.append(prompt)
-        n_tokens = len(self.encoder.encode(prompt))
-        self.log(f"Number of tokens {n_tokens}")
-        return prompt
-
-    def run_query(self, prompt):
-        self.log('Running query...')
-        response = self.chatter(prompt)
-        self.responses.append(response)
+    def run_query(self, code_file):
+        """ Where everything happens!! """
+        response = chatter(prompt)
         return response
 
-    def parse_response(self, response, dest_file):
-        self.log('Parsing response...')
-        json = response.to_json()
-        result_string = json['kwargs']['content']
-        match_pattern = re.compile(r'```python(.*?)```', re.DOTALL)
-        code_match = match_pattern.search(result_string)
-        code = code_match.group(1)
-
-        # Write to file
-        if self.save:
-            self.log(f'Saving to {dest_file}')
-            sc.makefilepath(dest_file, makedirs=True)
-            sc.savetext(dest_file, code)
-        return
-
-    def run_single(self, code_string, dest_file):
-        sc.heading(f'Migrating {dest_file}')
-        prompt = self.make_prompt(code_string)
-        response = self.run_query(prompt)
-        self.parse_response(response, dest_file)
-        return
+    
 
     def run(self):
         """ Run all steps of the process """
         self.T = sc.timer()
         self.make_diff()
         self.parse_diff()
-        self.parse_source()
+        self.parse_sources()
         self.make_chatter()
+        self.make_prompts()
         self.log(f'Migrating: {self.source_files}')
         for code_string, dest_file in zip(self.code_strings, self.dest_files): # TODO: run in parallel
             self.run_single(code_string, dest_file)
