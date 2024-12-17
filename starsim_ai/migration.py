@@ -135,7 +135,7 @@ class Migrate(sc.prettyobj):
     def __init__(self, source_dir, dest_dir, files=None, # Input and output folders
                  library=None, v_from=None, v_to=None, diff_file=None, diff=None, # Diff settings
                  model=None, model_kw=None, include=None, exclude=None, base_prompt=None, # Model settings
-                 parallel=True, verbose=True, save=True, die=False, run=False): # Run settings
+                 parallel=False, verbose=True, save=True, die=False, run=False): # Run settings
 
         # Inputs
         self.source_dir = sc.path(source_dir)
