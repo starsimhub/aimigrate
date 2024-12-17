@@ -26,7 +26,17 @@ class Models(Enum):
 
 
 class BaseQuery(sc.prettyobj):
-    def __init__(self, model='gpt-3.5-turbo', temperature=0.0, **kwargs):
+    """
+    Define an LLM query
+
+    Key args:
+        model="gpt-4o",
+        temperature=0.7,
+        max_tokens=None,
+        timeout=None,
+        max_retries=2,
+    """
+    def __init__(self, model='gpt-3.5-turbo', temperature=0.7, **kwargs):
         # Update sampling temperature
         kwargs.update({'temperature':temperature})
 
