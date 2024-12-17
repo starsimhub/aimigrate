@@ -60,7 +60,7 @@ class CodeFile(sc.prettyobj):
 
     def run_query(self, chatter):
         """ Where everything happens!! """
-        with sc.timer() as self.timer:
+        with sc.timer(self.file) as self.timer:
             self.response = chatter(self.prompt)
         return self.response
 
@@ -244,7 +244,7 @@ class Migrate(sc.prettyobj):
 
     def run_single(self, code_file):
         """ Where everything happens!! """
-        self.log(f'Migrating {code_file.file}')
+        self.log(f'Migrating {code_file.file}: {code_file.n_tokens} tokens')
         try:
             code_file.run(self.chatter, save=self.save)
         except Exception as E:
