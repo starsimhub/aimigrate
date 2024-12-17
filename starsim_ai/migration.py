@@ -11,14 +11,7 @@ __all__ = ['CodeFile', 'Migrate', 'migrate']
 
 # TODO: figure out how to expand the context to not need to exclude files
 default_include = ["*.py"]
-default_exclude = [
-    "docs/*",
-    "tests/*",
-    "__init__.py",
-    "setup.py",
-    'starsim/diseases/syphilis.py',
-    'starsim/diseases/cholera.py',
-]
+default_exclude = ["__init__.py", "setup.py"]
 
 default_base_prompt = '''
 Here is the diff information for an update to the starsim (ss) package:
