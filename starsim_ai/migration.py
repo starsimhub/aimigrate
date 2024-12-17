@@ -7,6 +7,9 @@ import tiktoken
 import sciris as sc
 import starsim_ai as ssai
 
+__all__ = ['CodeFile', 'Migrate', 'migrate']
+
+# TODO: figure out how to expand the context to not need to exclude files
 default_include = ["*.py", "starsim/diseases/sir.py"]
 default_exclude = ["starsim/diseases/*", "docs/*", "tests/*", "__init__.py", "setup.py"]
 
@@ -22,15 +25,32 @@ Please refactor the below code to maintain compatibility with the starsim (ss) c
 Refactored code:
 '''
 
+class CodeFile(sc.prettyobj):
+    """
+    A class to hold the original and migrated code
+    """
+    def __init__(self, source_dir, source, dest):
+        self.source_dir = source_dir
+        self.source = source
+        self.dest = dest
+        self.orig_code = None
+        self.prompt = None
+        self.response = None
+        self.new_code = None
+        self.error = None
+        return
+
+
 
 class Migrate(sc.prettyobj):
     """
     Handle all steps of code migration
 
     Args:
-        source (str): the source folder (or single file) to migrate
-        dest (str): the destination folder to put the migrated files in
-        library (str/Module): the library to base the migration on (i.e., Starsim or the path to it)
+        source_dir (str/path): the source folder (or single file) to migrate
+        dest_dir (str/path): the destination folder to put the migrated files in
+        source_files (list): if provided, the list of files to migrate (else, migrate all Python files in the source folder)
+        library (str/path/module): the library to base the migration on (i.e., Starsim or the path to it)
         v_from (str): the git hash or version of Starsim that the code is currently written in
         v_to (str): the git hash or version of Starsim that the new code should be written in
         diff_file (str): if provided, load this diff file instead of computing it via library/v_from/v_to, i.e. git diff v1.0.3 v2.2.0 > diff_file
@@ -50,8 +70,8 @@ class Migrate(sc.prettyobj):
         import starsim_ai as ssai
 
         M = ssai.Migrate(
-            source = '/path/to/your/code/folder', # folder with the code to migrate
-            dest = '/path/to/migrated/folder', # folder to output migrated code into
+            source_dir = '/path/to/your/code/folder', # folder with the code to migrate
+            dest_dir = '/path/to/migrated/folder', # folder to output migrated code into
             library = ss, # can also be the path to the starsim folder, which must be the cloned repo (not from pypi)
             v_from = 'v1.0.3', # can be any valid git tag or hash
             v_to = 'v2.2.0', # ditto
@@ -59,14 +79,15 @@ class Migrate(sc.prettyobj):
         )
         M.run()
     """
-
-    def __init__(self, source, dest=None, library=None, v_from=None, v_to=None, diff_file=None, diff=None,
-                 model=None, include=None, exclude=None, base_prompt=None,
-                 parallel=False, verbose=True, save=True, run=False):
+    def __init__(self, source_dir, dest_dir, source_files=None, # Input and output folders
+                 library=None, v_from=None, v_to=None, diff_file=None, diff=None, # Diff settings
+                 model=None, include=None, exclude=None, base_prompt=None, # Model settings
+                 parallel=False, verbose=True, save=True, run=False): # Run settings
 
         # Inputs
-        self.source = source
-        self.dest = dest
+        self.source_dir = sc.path(source_dir)
+        self.dest_dir = sc.path(dest_dir)
+        self.source_files = source_files
         self.library = library
         self.v_from = v_from
         self.v_to = v_to
@@ -83,15 +104,10 @@ class Migrate(sc.prettyobj):
         # Populated fields
         self.git_diff = None
         self.n_tokens = None
-        self.source_files = []
-        self.python_codes = []
-        self.code_strings = []
-        self.prompts = []
-        self.responses = []
-        self.dest_files = []
-        self.errors = []
+        self.code_files = None
         self.encoder = None
         self.chatter = None
+        self.errors = []
 
         # Optionally run
         if run:
@@ -124,6 +140,7 @@ class Migrate(sc.prettyobj):
             with open(self.diff_file, 'r') as f:
                 self.diff = f.readlines()
         else:
+            self.parse_library()
             with ssai.utils.TemporaryDirectoryChange(self.library):
                 self.diff = sc.runcommand(f'git diff {self.v_from} {self.v_to}')
         return
@@ -212,7 +229,6 @@ class Migrate(sc.prettyobj):
     def run(self):
         """ Run all steps of the process """
         self.T = sc.timer()
-        self.parse_library()
         self.make_diff()
         self.parse_diff()
         self.parse_source()

@@ -44,7 +44,7 @@ def get_python_files(path, gitignore=False):
     return python_files
 
 
-class GitDiff:
+class GitDiff(sc.prettyobj):
     """
     Create and parse the git diff
     """
@@ -154,7 +154,7 @@ class GitDiff:
         return diffs
 
 
-class PythonCode():
+class PythonCode(sc.prettyobj):
     """
     Parse Python code into classes and methods
     """
