@@ -1,4 +1,5 @@
-""" code.py
+"""
+Helper classes for parsing code in a rigorous way.
 """
 
 import ast

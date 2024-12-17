@@ -1,12 +1,12 @@
 [tool.poetry]
 name = "starsim_ai"
-version = "0.1.0"
-description = "Tool for integrating LLMs with starsim"
-authors = ["Your Name <you@example.com>"]
+version = "0.2.0"
+description = "AI tools for Starsim"
+authors = ["Katherine Rosenfeld <katherine.rosenfeld@gatesfoundation.org>", "Cliff Kerr <cliff@starsim.org>"]
 readme = "README.md"
 
 [tool.poetry.dependencies]
-python = "^3.10"
+python = "^3.11"
 langchain-openai = "^0.2.9"
 scipy = "^1.14.1"
 sciris = "^3.2.0"

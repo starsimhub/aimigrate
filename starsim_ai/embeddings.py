@@ -1,3 +1,7 @@
+"""
+Define embedding options for different LLMs.
+"""
+
 from enum import Enum
 from pydantic import BaseModel, Field, field_validator
 from langchain_openai import OpenAIEmbeddings
