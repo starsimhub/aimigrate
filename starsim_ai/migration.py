@@ -45,25 +45,25 @@ class CodeFile(sc.prettyobj):
         if process:
             self.process_code()
         return
-    
+
     def process_code(self):
         """ Parse the Python file into a string """
         self.python_code = ssai.PythonCode(self.source)
         self.orig_str = self.python_code.get_code_string()
         return
-    
+
     def make_prompt(self, base_prompt, diff_string, encoder):
         """ Create the prompt for the LLM """
         self.prompt = base_prompt.format(diff_string, self.orig_str)
         self.n_tokens = len(encoder.encode(self.prompt)) # Not strictly needed, but useful to know
         return
-    
+
     def run_query(self, chatter):
         """ Where everything happens!! """
         with sc.timer() as self.timer:
             self.response = chatter(self.prompt)
         return self.response
-    
+
     def parse_response(self):
         """ Extract code from the response object """
         json = self.response.to_json()
@@ -102,6 +102,7 @@ class Migrate(sc.prettyobj):
         diff_file (str): if provided, load this diff file instead of computing it via library/v_from/v_to, i.e. git diff v1.0.3 v2.2.0 > diff_file
         diff (str): if provided, use this diff rather than loading it from file
         model (str): the LLM to use
+        model_kw (dict): any keywords to pass to the model
         include (list): the list of files to include from the diff
         exclude (list): the list of files to not include from the diff
         base_prompt (str): the prompt template that will be populated with the diff and file information
@@ -127,7 +128,7 @@ class Migrate(sc.prettyobj):
     """
     def __init__(self, source_dir, dest_dir, source_files=None, # Input and output folders
                  library=None, v_from=None, v_to=None, diff_file=None, diff=None, # Diff settings
-                 model=None, include=None, exclude=None, base_prompt=None, # Model settings
+                 model=None, model_kw=None, include=None, exclude=None, base_prompt=None, # Model settings
                  parallel=False, verbose=True, save=True, die=False, run=False): # Run settings
 
         # Inputs
@@ -140,6 +141,7 @@ class Migrate(sc.prettyobj):
         self.diff_file = diff_file
         self.diff = diff
         self.model = model
+        self.model_kw = sc.mergedicts(model_kw)
         self.include = sc.ifelse(include, default_include)
         self.exclude = sc.ifelse(exclude, default_exclude)
         self.base_prompt = sc.ifelse(base_prompt, default_base_prompt)
@@ -210,7 +212,7 @@ class Migrate(sc.prettyobj):
             self.source_files = ssai.get_python_files(self.source_dir)
         else:
             self.source_files = sc.tolist(self.source_files)
-        
+
         if not len(self.source_files):
             errormsg = f'Could not find any Python files to migrate in {self.source_dir}'
             raise FileNotFoundError(errormsg)
@@ -232,9 +234,9 @@ class Migrate(sc.prettyobj):
         """ Create the LLM agent """
         self.log('Creating agent...')
         self.encoder = tiktoken.encoding_for_model(encoding) # encoder (for counting tokens)
-        self.chatter = ssai.SimpleQuery(model=self.model)
+        self.chatter = ssai.SimpleQuery(model=self.model, **self.model_kw)
         return
-    
+
     def make_prompts(self):
         diff_string = self.git_diff.get_diff_string()
         for code_file in self.code_files:
@@ -245,12 +247,12 @@ class Migrate(sc.prettyobj):
         """ Where everything happens!! """
         self.log(f'Migrating {code_file.file}')
         try:
-            response = code_file.run(self.chatter, save=self.save)
+            code_file.run(self.chatter, save=self.save)
         except Exception as E:
             errormsg = f'Could not parse {code_file.file}: {E}'
             self.errors.append(errormsg)
             raise E if self.die else print(errormsg)
-        return response
+        return
 
     def run(self):
         """ Run all steps of the process """

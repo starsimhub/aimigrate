@@ -5,6 +5,7 @@ Define the different `Query` classes, which include the `chat()` interface.
 from enum import Enum
 from typing import Dict, Union, Type
 from pydantic import BaseModel, Field, field_validator
+import sciris as sc
 
 from langchain_core.prompts import PromptTemplate
 from langchain_core.output_parsers import JsonOutputParser
@@ -24,11 +25,11 @@ class Models(Enum):
     HUGGINGFACE = {'meta-llama/Llama-2-7b-chat-hf', 'meta-llama/Llama-3.2-1B'}
 
 
-class BaseQuery():
+class BaseQuery(sc.prettyobj):
     def __init__(self, model='gpt-3.5-turbo', temperature=0.0, **kwargs):
         # Update sampling temperature
         kwargs.update({'temperature':temperature})
-        
+
         # Validate and parse the configuration
         self.config = LLMConfig(model=model)
 
@@ -43,7 +44,7 @@ class BaseQuery():
             )
         else:
             raise ValueError(f"Unsupported provider. Choose {[e.name for e in Models]}")
-        
+
     def __call__(self, user_input):
         return self.llm.invoke(user_input)
 
@@ -72,8 +73,8 @@ class LLMConfig(BaseModel):
             if model in provider_enum.value:
                 return provider_enum.name
         raise ValueError(f"No provider found for model '{model}'.")
-        
-        
+
+
 class SimpleQuery(BaseQuery):
     """
     A simple query interface to interact with an AI model.
@@ -122,7 +123,7 @@ class JSONQuery(BaseQuery):
     """
     A query interface that returns the response in JSON format.
 
-    Example: 
+    Example:
 
         # Define your desired data structure.
         class Joke(BaseModel):
@@ -144,7 +145,7 @@ class JSONQuery(BaseQuery):
         Args:
             parser (BaseModel, Dict): The structure of the expected JSON response.
             model (str): The name of the model to use. Defaults to 'gpt-3.5-turbo'.
-        """        
+        """
         super().__init__(model, **kwargs)
 
         # Set up a parser + inject instructions into the prompt template.
@@ -166,22 +167,22 @@ class JSONQuery(BaseQuery):
     def chat(self, user_input):
         response = self.chain.invoke({"query": user_input})
         return response
-        
+
     @staticmethod
     def create_pydantic_model(class_name: str, fields: Dict[str, str]) -> Type[BaseModel]:
         """
         Dynamically create a Pydantic model class.
-        
+
         Args:
             class_name (str): The name of the class to create.
-            fields (Dict[str, str]): A dictionary where keys are field names 
+            fields (Dict[str, str]): A dictionary where keys are field names
                                     and values are field descriptions.
-        
+
         Returns:
             Type[BaseModel]: The dynamically created Pydantic model class.
         """
         # Prepare the annotations dictionary
         annotations = {key: (str, Field(description=value)) for key, value in fields.items()}
-        
+
         # Create the Pydantic model dynamically
         return type(class_name, (BaseModel,), {"__annotations__": {k: v[0] for k, v in annotations.items()}, **{k: v[1] for k, v in annotations.items()}})
