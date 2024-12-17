@@ -25,7 +25,10 @@ class Models(Enum):
 
 
 class BaseQuery():
-    def __init__(self, model='gpt-3.5-turbo', **kwargs):
+    def __init__(self, model='gpt-3.5-turbo', temperature=0.0, **kwargs):
+        # Update sampling temperature
+        kwargs.update({'temperature':temperature})
+        
         # Validate and parse the configuration
         self.config = LLMConfig(model=model)
 
