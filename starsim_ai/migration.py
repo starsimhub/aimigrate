@@ -112,7 +112,7 @@ class Migrate(sc.prettyobj):
         include (list): the list of files to include from the diff
         exclude (list): the list of files to not include from the diff
         base_prompt (str): the prompt template that will be populated with the diff and file information
-        parallel (bool): whether to migrate the files in parallel (not yet implemented)
+        parallel (bool): whether to migrate the files in parallel
         verbose (bool): print information during the migration (default True)
         save (bool): whether to save the files to disk (default True)
         run (bool): whether to perform the migration immediately (default False)
