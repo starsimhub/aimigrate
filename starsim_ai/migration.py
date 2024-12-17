@@ -29,9 +29,10 @@ class CodeFile(sc.prettyobj):
     """
     A class to hold the original and migrated code
     """
-    def __init__(self, source, dest, process=True):
+    def __init__(self, source, dest, file, process=True):
         self.source = source
         self.dest = dest
+        self.file = file
         self.python_code = None
         self.orig_str = None
         self.prompt = None
@@ -40,6 +41,7 @@ class CodeFile(sc.prettyobj):
         self.response = None
         self.new_str = None
         self.error = None
+        self.timer = None
         if process:
             self.process_code()
         return
@@ -50,7 +52,7 @@ class CodeFile(sc.prettyobj):
         self.orig_str = self.python_code.get_code_string()
         return
     
-    def make_prompt(self, base_prompt, diff_string):
+    def make_prompt(self, base_prompt, diff_string, encoder):
         """ Create the prompt for the LLM """
         self.prompt = base_prompt.format(diff_string, self.orig_str)
         self.n_tokens = len(encoder.encode(self.prompt)) # Not strictly needed, but useful to know
@@ -58,8 +60,9 @@ class CodeFile(sc.prettyobj):
     
     def run_query(self, chatter):
         """ Where everything happens!! """
-        self.response = chatter(self.prompt)
-        return
+        with sc.timer() as self.timer:
+            self.response = chatter(self.prompt)
+        return self.response
     
     def parse_response(self):
         """ Extract code from the response object """
@@ -76,7 +79,7 @@ class CodeFile(sc.prettyobj):
         self.parse_response()
         if save:
             self.save()
-        return
+        return self.response
 
     def save(self):
         """ Write to file """
@@ -125,7 +128,7 @@ class Migrate(sc.prettyobj):
     def __init__(self, source_dir, dest_dir, source_files=None, # Input and output folders
                  library=None, v_from=None, v_to=None, diff_file=None, diff=None, # Diff settings
                  model=None, include=None, exclude=None, base_prompt=None, # Model settings
-                 parallel=False, verbose=True, save=True, run=False): # Run settings
+                 parallel=False, verbose=True, save=True, die=False, run=False): # Run settings
 
         # Inputs
         self.source_dir = sc.path(source_dir)
@@ -143,6 +146,7 @@ class Migrate(sc.prettyobj):
         self.parallel = parallel
         self.verbose = verbose
         self.save = save
+        self.die = die
 
         # Populated fields
         self.git_diff = None
@@ -215,7 +219,7 @@ class Migrate(sc.prettyobj):
             try:
                 source = self.source_dir / file
                 dest = self.dest_dir / file
-                code_file = CodeFile(source=source, dest=dest) # Actually do the processing
+                code_file = CodeFile(source=source, dest=dest, file=file) # Actually do the processing
                 self.code_files.append(code_file)
             except Exception as E:
                 errormsg = f'Could not parse {file}: {E}'
@@ -237,25 +241,33 @@ class Migrate(sc.prettyobj):
             code_file.make_prompt(self.base_prompt, diff_string, encoder=self.encoder)
         return
 
-    def run_query(self, code_file):
+    def run_single(self, code_file):
         """ Where everything happens!! """
-        response = chatter(prompt)
+        self.log(f'Migrating {code_file.file}')
+        try:
+            response = code_file.run(self.chatter, save=self.save)
+        except Exception as E:
+            errormsg = f'Could not parse {code_file.file}: {E}'
+            self.errors.append(errormsg)
+            raise E if self.die else print(errormsg)
         return response
-
-    
 
     def run(self):
         """ Run all steps of the process """
-        self.T = sc.timer()
         self.make_diff()
         self.parse_diff()
         self.parse_sources()
         self.make_chatter()
         self.make_prompts()
-        self.log(f'Migrating: {self.source_files}')
-        for code_string, dest_file in zip(self.code_strings, self.dest_files): # TODO: run in parallel
-            self.run_single(code_string, dest_file)
-        self.T.toc()
+
+        self.log(f'Migrating {len(self.source_files)} files:\n{sc.newlinejoin(self.source_files)}')
+        self.timer = sc.timer()
+        if self.parallel:
+            sc.parallelize(self.run_single, self.code_files, parallelizer='thread')
+        else:
+            for code_file in self.code_files:
+                self.run_single(code_file)
+        self.timer.toc('Total time')
         return
 
 
