@@ -113,7 +113,7 @@ class Migrate(sc.prettyobj):
         include (list): the list of files to include from the diff
         exclude (list): the list of files to not include from the diff
         base_prompt (str): the prompt template that will be populated with the diff and file information
-        parallel (bool): whether to migrate the files in parallel (not yet implemented)
+        parallel (bool): whether to migrate the files in parallel
         verbose (bool): print information during the migration (default True)
         save (bool): whether to save the files to disk (default True)
         run (bool): whether to perform the migration immediately (default False)
@@ -136,7 +136,7 @@ class Migrate(sc.prettyobj):
     def __init__(self, source_dir, dest_dir, files=None, # Input and output folders
                  library=None, v_from=None, v_to=None, diff_file=None, diff=None, # Diff settings
                  model=None, model_kw=None, include=None, exclude=None, base_prompt=None, # Model settings
-                 parallel=True, verbose=True, save=True, die=False, run=False): # Run settings
+                 parallel=False, verbose=True, save=True, die=False, run=False): # Run settings
 
         # Inputs
         self.source_dir = sc.path(source_dir)
