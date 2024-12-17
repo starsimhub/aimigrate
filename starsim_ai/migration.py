@@ -95,7 +95,7 @@ class Migrate(sc.prettyobj):
     Args:
         source_dir (str/path): the source folder (or single file) to migrate
         dest_dir (str/path): the destination folder to put the migrated files in
-        source_files (list): if provided, the list of files to migrate (else, migrate all Python files in the source folder)
+        files (list): if provided, the list of files to migrate (else, migrate all Python files in the source folder)
         library (str/path/module): the library to base the migration on (i.e., Starsim or the path to it)
         v_from (str): the git hash or version of Starsim that the code is currently written in
         v_to (str): the git hash or version of Starsim that the new code should be written in
@@ -126,15 +126,15 @@ class Migrate(sc.prettyobj):
         )
         M.run()
     """
-    def __init__(self, source_dir, dest_dir, source_files=None, # Input and output folders
+    def __init__(self, source_dir, dest_dir, files=None, # Input and output folders
                  library=None, v_from=None, v_to=None, diff_file=None, diff=None, # Diff settings
                  model=None, model_kw=None, include=None, exclude=None, base_prompt=None, # Model settings
-                 parallel=False, verbose=True, save=True, die=False, run=False): # Run settings
+                 parallel=True, verbose=True, save=True, die=False, run=False): # Run settings
 
         # Inputs
         self.source_dir = sc.path(source_dir)
         self.dest_dir = sc.path(dest_dir)
-        self.source_files = source_files
+        self.files = files
         self.library = library
         self.v_from = v_from
         self.v_to = v_to
@@ -152,10 +152,9 @@ class Migrate(sc.prettyobj):
 
         # Populated fields
         self.git_diff = None
-        self.n_tokens = None
-        self.code_files = None
         self.encoder = None
         self.chatter = None
+        self.code_files = []
         self.errors = []
 
         # Optionally run
@@ -166,7 +165,12 @@ class Migrate(sc.prettyobj):
     def log(self, string, color='green'):
         """ Print if self.verbose is True """
         if self.verbose:
-            printfunc = dict(default=print, red=sc.printred, green=sc.printgreen, blue=sc.printblue)[color]
+            printfunc = dict(
+                default=print,
+                red=sc.printred,
+                green=sc.printgreen,
+                blue=sc.printcyan
+            )[color]
             printfunc(string)
         return
 
@@ -208,25 +212,20 @@ class Migrate(sc.prettyobj):
     def parse_sources(self):
         """ Find the supplied files and parse them """
         self.log('Parsing source files')
-        if self.source_files is None:
-            self.source_files = ssai.get_python_files(self.source_dir)
+        if self.files is None:
+            self.files = ssai.get_python_files(self.source_dir)
         else:
-            self.source_files = sc.tolist(self.source_files)
+            self.files = sc.tolist(self.files)
 
-        if not len(self.source_files):
+        if not len(self.files):
             errormsg = f'Could not find any Python files to migrate in {self.source_dir}'
             raise FileNotFoundError(errormsg)
 
-        for file in self.source_files:
-            try:
-                source = self.source_dir / file
-                dest = self.dest_dir / file
-                code_file = CodeFile(source=source, dest=dest, file=file) # Actually do the processing
-                self.code_files.append(code_file)
-            except Exception as E:
-                errormsg = f'Could not parse {file}: {E}'
-                self.errors.append(errormsg)
-                print(errormsg)
+        for file in self.files:
+            source = self.source_dir / file
+            dest = self.dest_dir / file
+            code_file = CodeFile(source=source, dest=dest, file=file) # Actually do the processing
+            self.code_files.append(code_file)
 
         return
 
@@ -256,13 +255,15 @@ class Migrate(sc.prettyobj):
 
     def run(self):
         """ Run all steps of the process """
+        self.log(f'\nStarting migration of {self.source_dir}', color='blue')
         self.make_diff()
         self.parse_diff()
         self.parse_sources()
         self.make_chatter()
         self.make_prompts()
 
-        self.log(f'Migrating {len(self.source_files)} files:\n{sc.newlinejoin(self.source_files)}')
+        self.log(f'\nMigrating {len(self.files)} files', color='blue')
+        self.log(f'{sc.newlinejoin(self.files)}', color='default')
         self.timer = sc.timer()
         if self.parallel:
             sc.parallelize(self.run_single, self.code_files, parallelizer='thread')
