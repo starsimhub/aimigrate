@@ -10,8 +10,14 @@ import starsim_ai as ssai
 __all__ = ['CodeFile', 'Migrate', 'migrate']
 
 # TODO: figure out how to expand the context to not need to exclude files
-default_include = ["*.py", "starsim/diseases/sir.py"]
-default_exclude = ["starsim/diseases/*", "docs/*", "tests/*", "__init__.py", "setup.py"]
+default_include = [
+    "*.py",
+    "starsim/diseases/sir.py",
+    "starsim/diseases/hiv.py",
+    "starsim/diseases/gonorrhea.py",
+    "starsim/diseases/measles.py",
+]
+default_exclude = ["docs/*", "tests/*", "__init__.py", "setup.py", 'starsim/diseases/syphilis.py']
 
 default_base_prompt = '''
 Here is the diff information for an update to the starsim (ss) package:
