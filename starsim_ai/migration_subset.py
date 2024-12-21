@@ -75,8 +75,8 @@ def parse_diffs(migrator, methods_list):
         try:
             attr = getattr(ss, method_str)
             attr_file = inspect.getfile(attr)
-            stdout = get_diff(migrator, attr_file)
             if attr_file not in diffs:
+                stdout = get_diff(migrator, attr_file)
                 diffs[attr_file] = stdout
         except AttributeError:
             # print(f"Attribute {method_str} not found")
