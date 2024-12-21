@@ -117,7 +117,7 @@ class CodeFileWSubset(ssai.CodeFile):
 
     def make_prompt(self, base_prompt, encoder, model, migrator):
         """ Create the prompt for the LLM """
-        methods_list = self.parse_methods(migrator=self)
+        methods_list = self.parse_methods(migrator=migrator)
         diffs = parse_diffs(migrator, methods_list=methods_list)
         self.prompt = base_prompt.format("\n".join(diffs.values()), self.orig_str)
         self.n_tokens = len(encoder.encode(self.prompt)) # Not strictly needed, but useful to know
