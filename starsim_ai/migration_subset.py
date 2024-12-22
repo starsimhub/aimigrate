@@ -7,7 +7,7 @@ import sciris as sc
 import starsim as ss
 import starsim_ai as ssai
 import inspect
-import subprocess
+from pathlib import Path
 
 __all__ = ['MigrateWSubset']
 
@@ -59,13 +59,16 @@ Answer:
 
 # gets the git diff of a file between two commits
 def get_diff(migrator, file):
+    # remove the root directory
+    module_dir = Path(ss.__path__[0]).parent.as_posix()
     with ssai.utils.TemporaryDirectoryChange(migrator.library):
         cmd = [s for s in f"git diff {migrator.v_from} {migrator.v_to} -- {file}".split()]
-        result = subprocess.run(cmd, capture_output=True, text=True, cwd=migrator.library)
-    return result.stdout
+        result =  sc.runcommand(' '.join(cmd))
+    return result
 
 def parse_diffs(migrator, methods_list):
     diffs = {}
+    migrator.parse_library()
     # just keep track of the files that have changes
     for method in methods_list:
         if method.startswith("ss."):
