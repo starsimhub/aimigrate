@@ -7,7 +7,7 @@ import re
 import fnmatch
 import tiktoken
 import sciris as sc
-import starsim_ai as sa
+import llmmigrate as mig
 import subprocess
 
 
@@ -26,7 +26,7 @@ def get_python_files(source_dir, gitignore=False):
 
     python_files = []
     if gitignore:
-        with sa.utils.TemporaryDirectoryChange(source_dir):
+        with mig.utils.TemporaryDirectoryChange(source_dir):
             files = subprocess.check_output("git ls-files", shell=True).splitlines()
             for file in files:
                 decoded = file.decode()
@@ -174,7 +174,7 @@ class PythonCode(sc.prettyobj):
 
     def set_classes(self):
         tree = ast.parse(''.join(self.code_lines))
-        visitor = sa.ClassVisitor()
+        visitor = mig.ClassVisitor()
         visitor.visit(tree)
         self.classes = visitor.classes
         return
@@ -185,7 +185,7 @@ class PythonCode(sc.prettyobj):
             if c['name'] == name:
                 class_code_list = self.code_lines[c['lineno']-1:c['end_lineno']+1]
                 tree = ast.parse(''.join(class_code_list))
-                visitor = sa.MethodVisitor()
+                visitor = mig.MethodVisitor()
                 visitor.visit(tree)
                 return class_code_list, visitor
         raise ValueError(f"Class {name} not found")

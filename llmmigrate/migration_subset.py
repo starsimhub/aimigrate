@@ -5,7 +5,7 @@ import re
 from pydantic import BaseModel, Field
 import sciris as sc
 import starsim as ss
-import starsim_ai as ssai
+import llmmigrate as mig
 import inspect
 from pathlib import Path
 
@@ -61,7 +61,7 @@ Answer:
 def get_diff(migrator, file):
     # remove the root directory
     module_dir = Path(ss.__path__[0]).parent.as_posix()
-    with ssai.utils.TemporaryDirectoryChange(migrator.library):
+    with mig.utils.TemporaryDirectoryChange(migrator.library):
         cmd = [s for s in f"git diff {migrator.v_from} {migrator.v_to} -- {file}".split()]
         result =  sc.runcommand(' '.join(cmd))
     return result
@@ -90,7 +90,7 @@ def parse_diffs(migrator, methods_list):
     return diffs        
 
 
-class CodeFileWSubset(ssai.CodeFile):
+class CodeFileWSubset(mig.CodeFile):
     """
     A class to hold the original and migrated code
     """
@@ -113,7 +113,7 @@ class CodeFileWSubset(ssai.CodeFile):
 
     def process_code(self):
         """ Parse the Python file into a string """
-        self.python_code = ssai.PythonCode(self.source)
+        self.python_code = mig.PythonCode(self.source)
         self.orig_str = self.python_code.get_code_string()
         return
 
@@ -128,7 +128,7 @@ class CodeFileWSubset(ssai.CodeFile):
 
     def parse_methods(self, migrator):
         # query format is CSV
-        query = ssai.CSVQuery(model=migrator.model, **migrator.model_kw)
+        query = mig.CSVQuery(model=migrator.model, **migrator.model_kw)
         # figure out all the references to starsim
         ans = query(default_methods_prompt.format("starsim (ss)", self.orig_str))
         ans = [a.replace('`', '') for a in ans] # remove backticks
@@ -163,7 +163,7 @@ class CodeFileWSubset(ssai.CodeFile):
         sc.savetext(self.dest, self.new_str)
         return
     
-class MigrateWSubset(ssai.Migrate):
+class MigrateWSubset(mig.Migrate):
 
     def make_prompts(self):
         for code_file in self.code_files:
@@ -174,7 +174,7 @@ class MigrateWSubset(ssai.Migrate):
         """ Find the supplied files and parse them """
         self.log('Parsing source files')
         if self.files is None:
-            self.files = ssai.get_python_files(self.source_dir)
+            self.files = mig.get_python_files(self.source_dir)
         else:
             self.files = sc.tolist(self.files)
 
