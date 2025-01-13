@@ -2,90 +2,58 @@
 ssAI-Migrate by identifying a subset of the core to utilize as context
 """
 import re
+import types
+import importlib.util
 from pydantic import BaseModel, Field
 import sciris as sc
-import starsim as ss
 import llmmigrate as mig
 import inspect
 from pathlib import Path
+import traceback
+
 
 __all__ = ['MigrateWSubset']
 
-default_methods_prompt = """
-In the following Python code, find all dependencies on the {} package, 
-including inherited methods and attributes from parent classes. Do not list starsim or ss itself.
-List only the dependencies from starsim.
--------------
-Here is an example:
-
-Code:
+default_methods_prompt = """ # In the following Python code, find all dependencies on the {module} package, 
+including inherited methods and attributes from parent classes. Return the dependencies without the alias. 
+For example: np.sin would becomes numpy.sin
+<code>
 ```python
-import starsim as ss
-
-# Define the parameters
-pars = dict(
-    n_agents = 5_000,     # Number of agents to simulate
-    networks = dict(      # Networks define how agents interact w/ each other
-        type = 'random',  # Here, we use a 'random' network
-        n_contacts = 10   # Each person has 10 contacts with other people
-    ),
-    diseases = dict(      # *Diseases* add detail on what diseases to model
-        type = 'sir',     # Here, we're creating an SIR disease
-        init_prev = 0.01, # Proportion of the population initially infected
-        beta = 0.05,      # Probability of transmission between contacts
-    )
-)
-
-# Make the sim, run and plot
-sim = ss.Sim(pars)
-sim.run()
-sim.plot() # Plot all the sim results
-sim.diseases.sir.plot() # Plot the standard SIR curves
+{code}
 ```
-Answer:
-['ss.Sim', 'ss.Sim.run', 'ss.Sim.plot', 'ss.diseases', 'ss.diseases.sir', 'ss.diseases.sir.plot']
--------------
-
-Now, it's  your turn. Please be as accurate as possible.
-
-Code:
-
-```python
-{}
-```
-
-Answer:
+<answer>
 """
-
 # gets the git diff of a file between two commits
 def get_diff(migrator, file):
-    # remove the root directory
-    module_dir = Path(ss.__path__[0]).parent.as_posix()
+    """ Handle the different options for the diff: create it, load it, or use it """
+    migrator.log('Making the diff')
+    migrator.parse_library()
     with mig.utils.TemporaryDirectoryChange(migrator.library):
-        cmd = [s for s in f"git diff {migrator.v_from} {migrator.v_to} -- {file}".split()]
-        result =  sc.runcommand(' '.join(cmd))
+        result = sc.runcommand(f'git diff {migrator.v_from} {migrator.v_to} -- {file}')
     return result
-
+    
 def parse_diffs(migrator, methods_list):
     diffs = {}
     migrator.parse_library()
+    if isinstance(migrator.library, types.ModuleType):
+        module = migrator.library
+    else:
+        module = importlib.import_module(migrator.module_name)
+
     # just keep track of the files that have changes
     for method in methods_list:
-        if method.startswith("ss."):
-            method_str = method.split("ss.", 1)[1]
-        else:
-            method_str = method
         try:
-            attr = getattr(ss, method_str)
+            attr = getattr(module, method)
             attr_file = inspect.getfile(attr)
+            trim_length = len(Path(module.__path__[0]).parent.as_posix())
             if attr_file not in diffs:
-                stdout = get_diff(migrator, attr_file)
+                stdout = get_diff(migrator, attr_file[trim_length+1:])
                 diffs[attr_file] = stdout
         except AttributeError:
-            # print(f"Attribute {method_str} not found")
+            print(f"Attribute {method} not found")
             pass
         except Exception as e:
-            # print(f"traceback: {traceback.format_exc()}")
+            print(f"traceback: {traceback.format_exc()}")
             pass
     return diffs        
 
@@ -129,8 +97,8 @@ class CodeFileWSubset(mig.CodeFile):
     def parse_methods(self, migrator):
         # query format is CSV
         query = mig.CSVQuery(model=migrator.model, **migrator.model_kw)
-        # figure out all the references to starsim
-        ans = query(default_methods_prompt.format("starsim (ss)", self.orig_str))
+        # figure out all the module references
+        ans = query(default_methods_prompt.format(module=migrator.module_name, code=self.orig_str))
         ans = [a.replace('`', '') for a in ans] # remove backticks
         return ans
     
@@ -164,8 +132,20 @@ class CodeFileWSubset(mig.CodeFile):
         return
     
 class MigrateWSubset(mig.Migrate):
+    module_name: str = Field(None, description='The name of the module to migrate')
+
+    def set_module_name(self):
+        self.parse_library()
+        if isinstance(self.library, types.ModuleType):
+            self.module_name = self.library.__name__
+        else:
+            with mig.utils.TemporaryDirectoryChange(self.library):
+                module_name = mig.utils.get_module_name()            
+            self.module_name = module_name
+        return
 
     def make_prompts(self):
+        self.set_module_name()
         for code_file in self.code_files:
             code_file.make_prompt(self.base_prompt, encoder=self.encoder, model=self.model, migrator=self)
         return
