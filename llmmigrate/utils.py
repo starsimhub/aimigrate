@@ -1,4 +1,5 @@
 import os
+import importlib.util
 
 # Using a context manager to temporarily change the directory
 class TemporaryDirectoryChange:
@@ -29,3 +30,16 @@ class TemporaryDirectoryChange:
 
     def __exit__(self, exc_type, exc_value, traceback):
         os.chdir(self.original_dir)
+
+
+def get_module_name():
+    current_dir = os.path.abspath(os.getcwd())
+    parent_dir = os.path.dirname(current_dir)
+    module_name = os.path.basename(current_dir)
+
+    # Check if the module or package can be imported
+    spec = importlib.util.find_spec(module_name, [parent_dir])
+    if spec is not None:
+        return module_name
+    else:
+        return None
