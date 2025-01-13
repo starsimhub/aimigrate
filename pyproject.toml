@@ -1,23 +1,16 @@
-[tool.poetry]
+[project]
 name = "llmmigrate"
-version = "0.2.0"
+version = "0.1.0"
 description = "AI tools for migrating code"
-authors = ["Katherine Rosenfeld <katherine.rosenfeld@gatesfoundation.org>", "Cliff Kerr <cliff@starsim.org>"]
 readme = "README.md"
-
-[tool.poetry.dependencies]
-python = "^3.10"
-langchain-openai = "^0.2.9"
-scipy = "^1.14.1"
-sciris = "^3.2.0"
-langchain = "^0.3.7"
-pytest = "^8.3.3"
-langchain-google-genai = "^2.0.5"
-vllm = "^0.6.4.post1"
-langchain-community = "^0.3.8"
-llama-index-readers-github = "^0.5.0"
-llama-index = "^0.12.9"
+requires-python = ">=3.10"
+dependencies = [
+    "langchain-community>=0.3.14",
+    "langchain-google-genai>=2.0.8",
+    "langchain-openai>=0.3.0",
+    "sciris>=3.2.0",
+]
 
 [build-system]
-requires = ["poetry-core"]
-build-backend = "poetry.core.masonry.api"
+requires = ["flit-core>=3.7"]
+build-backend = "flit_core.buildapi"
