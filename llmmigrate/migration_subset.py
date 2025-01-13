@@ -15,8 +15,19 @@ import traceback
 __all__ = ['MigrateWSubset']
 
 default_methods_prompt = """ # In the following Python code, find all dependencies on the {module} package, 
-including inherited methods and attributes from parent classes. Return the dependencies without the alias. 
-For example: np.sin would becomes numpy.sin
+including inherited methods and attributes from parent classes. Return the dependencies without the alias (if any) introduced during the
+module import.
+
+For example: 
+<code>
+```python
+import numpy as np
+a = np.sin(np.pi)
+```
+<answer>
+sin, pi
+
+Your turn: 
 <code>
 ```python
 {code}
