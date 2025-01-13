@@ -16,16 +16,16 @@ from langchain_openai import ChatOpenAI
 from langchain_google_genai import ChatGoogleGenerativeAI
 from langchain_community.llms import VLLM
 
-from llama_index.core import VectorStoreIndex
-from llama_index.readers.github import GithubRepositoryReader, GithubClient
-from llama_index.core import load_index_from_storage
-from llama_index.llms.openai import OpenAI
-from llama_index.core import StorageContext
-from llama_index.core.vector_stores.simple import SimpleVectorStore
-from llama_index.core.storage.docstore import SimpleDocumentStore
-from llama_index.core.storage.index_store.simple_index_store import SimpleIndexStore
+# from llama_index.core import VectorStoreIndex
+# from llama_index.readers.github import GithubRepositoryReader, GithubClient
+# from llama_index.core import load_index_from_storage
+# from llama_index.llms.openai import OpenAI
+# from llama_index.core import StorageContext
+# from llama_index.core.vector_stores.simple import SimpleVectorStore
+# from llama_index.core.storage.docstore import SimpleDocumentStore
+# from llama_index.core.storage.index_store.simple_index_store import SimpleIndexStore
 
-__all__ = ["Models", "BaseQuery", "SimpleQuery", "JSONQuery", "CSVQuery", "RAGQuery"]
+__all__ = ["Models", "BaseQuery", "SimpleQuery", "JSONQuery", "CSVQuery"] #, "RAGQuery"]
 
 
 class Models(Enum):
@@ -206,65 +206,65 @@ class JSONQuery(BaseQuery):
         # Create the Pydantic model dynamically
         return type(class_name, (BaseModel,), {"__annotations__": {k: v[0] for k, v in annotations.items()}, **{k: v[1] for k, v in annotations.items()}})
 
-class RAGQuery(sc.prettyobj):
-    def __init__(self, git_info: dict, model: str='gpt-3.5-turbo', persist_dir=None, **kwargs):
-        self.llm = OpenAI(model=model, **kwargs)
-        self.query_engine = self.load_query_engine(self.llm, git_info, persist_dir)
+# class RAGQuery(sc.prettyobj):
+#     def __init__(self, git_info: dict, model: str='gpt-3.5-turbo', persist_dir=None, **kwargs):
+#         self.llm = OpenAI(model=model, **kwargs)
+#         self.query_engine = self.load_query_engine(self.llm, git_info, persist_dir)
         
 
-    def load_query_engine(self, llm, git_info, persist_dir=None):
-        if persist_dir is not None:
-            if not os.path.exists(persist_dir):
-                save_dir = persist_dir
-                persist_dir = None
-            else:
-                storage_context = StorageContext.from_defaults(
-                docstore=SimpleDocumentStore.from_persist_dir(persist_dir=persist_dir),
-                vector_store=SimpleVectorStore.from_persist_dir(
-                    persist_dir=persist_dir
-                ),
-                index_store=SimpleIndexStore.from_persist_dir(persist_dir=persist_dir),
-                )        
-                index = load_index_from_storage(storage_context) 
-        if persist_dir is None:
-            reader = GithubRepositoryReader(
-                github_client=GithubClient(verbose=True),
-                owner=git_info['owner'],
-                repo=git_info['repo'],
-                use_parser=False,
-                verbose=False,
-                filter_directories=(
-                    ["starsim", "docs"],
-                    GithubRepositoryReader.FilterType.INCLUDE,
-                ),
-                filter_file_extensions=(
-                    [
-                        ".png",
-                        ".jpg",
-                        ".jpeg",
-                        ".gif",
-                        ".svg",
-                        ".ico",
-                        ".json",
-                        ".ipynb",
-                        ".csv"
-                    ],
-                    GithubRepositoryReader.FilterType.EXCLUDE,
-                ),
-            )
-            if 'commit_sha' in git_info:
-                documents = reader.load_data(commit_sha=git_info["commit_sha"])
-            elif 'branch' in git_info:
-                documents = reader.load_data(branch=git_info["branch"])
-            index = VectorStoreIndex.from_documents(documents)
-            if save_dir is not None:
-                index.storage_context.persist(persist_dir=save_dir)
-        query_engine = index.as_query_engine(llm=llm)
-        return query_engine
+#     def load_query_engine(self, llm, git_info, persist_dir=None):
+#         if persist_dir is not None:
+#             if not os.path.exists(persist_dir):
+#                 save_dir = persist_dir
+#                 persist_dir = None
+#             else:
+#                 storage_context = StorageContext.from_defaults(
+#                 docstore=SimpleDocumentStore.from_persist_dir(persist_dir=persist_dir),
+#                 vector_store=SimpleVectorStore.from_persist_dir(
+#                     persist_dir=persist_dir
+#                 ),
+#                 index_store=SimpleIndexStore.from_persist_dir(persist_dir=persist_dir),
+#                 )        
+#                 index = load_index_from_storage(storage_context) 
+#         if persist_dir is None:
+#             reader = GithubRepositoryReader(
+#                 github_client=GithubClient(verbose=True),
+#                 owner=git_info['owner'],
+#                 repo=git_info['repo'],
+#                 use_parser=False,
+#                 verbose=False,
+#                 filter_directories=(
+#                     ["starsim", "docs"],
+#                     GithubRepositoryReader.FilterType.INCLUDE,
+#                 ),
+#                 filter_file_extensions=(
+#                     [
+#                         ".png",
+#                         ".jpg",
+#                         ".jpeg",
+#                         ".gif",
+#                         ".svg",
+#                         ".ico",
+#                         ".json",
+#                         ".ipynb",
+#                         ".csv"
+#                     ],
+#                     GithubRepositoryReader.FilterType.EXCLUDE,
+#                 ),
+#             )
+#             if 'commit_sha' in git_info:
+#                 documents = reader.load_data(commit_sha=git_info["commit_sha"])
+#             elif 'branch' in git_info:
+#                 documents = reader.load_data(branch=git_info["branch"])
+#             index = VectorStoreIndex.from_documents(documents)
+#             if save_dir is not None:
+#                 index.storage_context.persist(persist_dir=save_dir)
+#         query_engine = index.as_query_engine(llm=llm)
+#         return query_engine
 
-    def __call__(self, user_input):
-        return self.chat(user_input)
+#     def __call__(self, user_input):
+#         return self.chat(user_input)
 
-    def chat(self, user_input):
-        response = self.query_engine.query(user_input)
-        return response
+#     def chat(self, user_input):
+#         response = self.query_engine.query(user_input)
+#         return response
