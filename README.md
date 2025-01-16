@@ -37,8 +37,6 @@ export GEMINI_API_KEY=$(cat ~/gemini_api_key)
 
 ## Usage
 
-### aimigrate
-
 Let's say we have a project *Zombiesim* that we want to migrate from Starsim v1 (v1.0.3) to v2 (v2.2.0). Typical usage is to migrate all the files in a folder to a new folder:
 ```py
 import starsim as ss
