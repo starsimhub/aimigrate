@@ -27,14 +27,15 @@ MODELS = sc.odict({
     'o1-preview': 'o1-preview-2024-09-12',
     'o1': 'o1-2024-12-17',
     'llama3-8b': 'llama3',
-    'llama3-70b': 'llama3:70b'
+    'llama3-70b': 'llama3:70b',
+    'codellama-70b': 'codellama:70b',
 })
 
 
 class Models(Enum):
     OPENAI = {'gpt-3.5-turbo-0125', 'gpt-4o-2024-08-06', 'gpt-4o-mini-2024-07-18', 'o1-mini-2024-09-12', 'o1-preview-2024-09-12', 'o1-2024-12-17'}
     GEMINI = {'gemini-1.5-flash', 'gemini-1.5-flash-8b', 'gemini-2.0-flash-exp'}
-    OLLAMA = {'llama3:70b', 'llama3'}
+    OLLAMA = {'llama3:70b', 'llama3', 'codellama:70b'}
 
 
 class BaseQuery(sc.prettyobj):

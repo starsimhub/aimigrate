@@ -53,4 +53,4 @@ aim.migrate(
 ```
 
 **Running local models**:
-We use `ollama` to run models locally. To start open a terminal run `ollama serve`. 
+We use `ollama` to run models locally. To start open a terminal run `ollama serve`. If it is your first time running the model you'll need to pull it first (e.g., `ollama run llama3`).
