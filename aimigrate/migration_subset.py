@@ -6,7 +6,7 @@ import types
 import importlib.util
 from pydantic import BaseModel, Field
 import sciris as sc
-import llmmigrate as mig
+import aimigrate as aim
 import inspect
 from pathlib import Path
 import traceback
@@ -39,7 +39,7 @@ def get_diff(migrator, file):
     """ Handle the different options for the diff: create it, load it, or use it """
     migrator.log('Making the diff')
     migrator.parse_library()
-    with mig.utils.TemporaryDirectoryChange(migrator.library):
+    with aim.utils.TemporaryDirectoryChange(migrator.library):
         result = sc.runcommand(f'git diff {migrator.v_from} {migrator.v_to} -- {file}')
     return result
     
@@ -69,7 +69,7 @@ def parse_diffs(migrator, methods_list):
     return diffs        
 
 
-class CodeFileWSubset(mig.CodeFile):
+class CodeFileWSubset(aim.CodeFile):
     """
     A class to hold the original and migrated code
     """
@@ -92,7 +92,7 @@ class CodeFileWSubset(mig.CodeFile):
 
     def process_code(self):
         """ Parse the Python file into a string """
-        self.python_code = mig.PythonCode(self.source)
+        self.python_code = aim.PythonCode(self.source)
         self.orig_str = self.python_code.get_code_string()
         return
 
@@ -107,7 +107,7 @@ class CodeFileWSubset(mig.CodeFile):
 
     def parse_methods(self, migrator):
         # query format is CSV
-        query = mig.CSVQuery(model=migrator.model, **migrator.model_kw)
+        query = aim.CSVQuery(model=migrator.model, **migrator.model_kw)
         # figure out all the module references
         ans = query(default_methods_prompt.format(module=migrator.module_name, code=self.orig_str))
         ans = [a.replace('`', '') for a in ans] # remove backticks
@@ -125,7 +125,15 @@ class CodeFileWSubset(mig.CodeFile):
         result_string = json['kwargs']['content']
         match_pattern = re.compile(r'```python(.*?)```', re.DOTALL)
         code_match = match_pattern.search(result_string)
-        self.new_str = code_match.group(1)
+        if code_match:
+            self.new_str = code_match.group(1)
+        else:
+            match_pattern = re.compile(r'```(.*?)```', re.DOTALL)
+            code_match = match_pattern.search(result_string)
+            if code_match:
+                self.new_str = code_match.group(1)
+            else:
+                self.new_str = result_string
         return
 
     def run(self, chatter, save=True):
@@ -142,16 +150,16 @@ class CodeFileWSubset(mig.CodeFile):
         sc.savetext(self.dest, self.new_str)
         return
     
-class MigrateWSubset(mig.Migrate):
+class MigrateWSubset(aim.Migrate):
     module_name: str = Field(None, description='The name of the module to migrate')
 
     def set_module_name(self):
-        self.parse_library()
+        # self.parse_library()
         if isinstance(self.library, types.ModuleType):
             self.module_name = self.library.__name__
         else:
-            with mig.utils.TemporaryDirectoryChange(self.library):
-                module_name = mig.utils.get_module_name()            
+            with aim.utils.TemporaryDirectoryChange(self.library):
+                module_name = aim.utils.get_module_name()            
             self.module_name = module_name
         return
 
@@ -165,7 +173,7 @@ class MigrateWSubset(mig.Migrate):
         """ Find the supplied files and parse them """
         self.log('Parsing source files')
         if self.files is None:
-            self.files = mig.get_python_files(self.source_dir)
+            self.files = aim.get_python_files(self.source_dir)
         else:
             self.files = sc.tolist(self.files)
 

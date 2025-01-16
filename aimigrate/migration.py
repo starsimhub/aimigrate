@@ -5,7 +5,7 @@ import re
 import types
 import tiktoken
 import sciris as sc
-import llmmigrate as mig
+import aimigrate as aim
 
 __all__ = ['CodeFile', 'Migrate', 'migrate']
 
@@ -48,7 +48,7 @@ class CodeFile(sc.prettyobj):
 
     def process_code(self):
         """ Parse the Python file into a string """
-        self.python_code = mig.PythonCode(self.source)
+        self.python_code = aim.PythonCode(self.source)
         self.orig_str = self.python_code.get_code_string()
         return
 
@@ -70,7 +70,15 @@ class CodeFile(sc.prettyobj):
         result_string = json['kwargs']['content']
         match_pattern = re.compile(r'```python(.*?)```', re.DOTALL)
         code_match = match_pattern.search(result_string)
-        self.new_str = code_match.group(1)
+        if code_match:
+            self.new_str = code_match.group(1)
+        else:
+            match_pattern = re.compile(r'```(.*?)```', re.DOTALL)
+            code_match = match_pattern.search(result_string)
+            if code_match:
+                self.new_str = code_match.group(1)
+            else:
+                self.new_str = result_string
         return
 
     def run(self, chatter, save=True):
@@ -195,14 +203,14 @@ class Migrate(sc.prettyobj):
                 self.diff = f.readlines()
         else:
             self.parse_library()
-            with mig.utils.TemporaryDirectoryChange(self.library):
+            with aim.utils.TemporaryDirectoryChange(self.library):
                 self.diff = sc.runcommand(f'git diff {self.v_from} {self.v_to}')
         return
 
     def parse_diff(self, encoding='gpt-4o'):
         """ Parse the diff into the different pieces """
         self.log('Parsing the diff')
-        self.git_diff = mig.GitDiff(self.diff, include_patterns=self.include, exclude_patterns=self.exclude)
+        self.git_diff = aim.GitDiff(self.diff, include_patterns=self.include, exclude_patterns=self.exclude)
         self.git_diff.summarize() # summarize
         self.n_tokens = self.git_diff.count_all_tokens(model=encoding) # NB: not implemented for all models
         if self.verbose:
@@ -213,7 +221,7 @@ class Migrate(sc.prettyobj):
         """ Find the supplied files and parse them """
         self.log('Parsing source files')
         if self.files is None:
-            self.files = mig.get_python_files(self.source_dir)
+            self.files = aim.get_python_files(self.source_dir)
         else:
             self.files = sc.tolist(self.files)
 
@@ -233,7 +241,7 @@ class Migrate(sc.prettyobj):
         """ Create the LLM agent """
         self.log('Creating agent...')
         self.encoder = tiktoken.encoding_for_model(encoding) # encoder (for counting tokens)
-        self.chatter = mig.SimpleQuery(model=self.model, **self.model_kw)
+        self.chatter = aim.SimpleQuery(model=self.model, **self.model_kw)
         return
 
     def make_prompts(self):

@@ -7,7 +7,7 @@ import re
 import fnmatch
 import tiktoken
 import sciris as sc
-import llmmigrate as mig
+import aimigrate as aim
 import subprocess
 
 
@@ -26,7 +26,7 @@ def get_python_files(source_dir, gitignore=False):
 
     python_files = []
     if gitignore:
-        with mig.utils.TemporaryDirectoryChange(source_dir):
+        with aim.utils.TemporaryDirectoryChange(source_dir):
             files = subprocess.check_output("git ls-files", shell=True).splitlines()
             for file in files:
                 decoded = file.decode()
@@ -44,7 +44,7 @@ def get_python_files(source_dir, gitignore=False):
 
 class GitDiff(sc.prettyobj):
     """
-    Create and parse the git diff
+    Parse the git diff
     """
 
     def __init__(self, file, include_patterns=None, exclude_patterns=None):
@@ -174,7 +174,7 @@ class PythonCode(sc.prettyobj):
 
     def set_classes(self):
         tree = ast.parse(''.join(self.code_lines))
-        visitor = mig.ClassVisitor()
+        visitor = aim.ClassVisitor()
         visitor.visit(tree)
         self.classes = visitor.classes
         return
@@ -185,7 +185,7 @@ class PythonCode(sc.prettyobj):
             if c['name'] == name:
                 class_code_list = self.code_lines[c['lineno']-1:c['end_lineno']+1]
                 tree = ast.parse(''.join(class_code_list))
-                visitor = mig.MethodVisitor()
+                visitor = aim.MethodVisitor()
                 visitor.visit(tree)
                 return class_code_list, visitor
         raise ValueError(f"Class {name} not found")
