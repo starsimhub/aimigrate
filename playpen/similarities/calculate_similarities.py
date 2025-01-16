@@ -6,7 +6,7 @@ import sciris as sc
 import pandas as pd
 from scipy.spatial import distance
 from scipy.stats import pearsonr
-import starsim_ai as sa
+import aimigrate as aim
 
 # change cwd to the directory of this file
 os.chdir(os.path.dirname(__file__))
@@ -31,11 +31,11 @@ def calculate_code_similarity(code_A, code_B):
     match_classes = {k.split('.')[0]:v.split('.')[0] for k,v in match_methods.items()}
 
     # parse the code
-    classes_A = sa.PythonCode(code_A)
-    classes_B = sa.PythonCode(code_B)
+    classes_A = aim.PythonCode(code_A)
+    classes_B = aim.PythonCode(code_B)
 
     # create embedder
-    embedder = sa.SimpleEmbedding(model='text-embedding-3-small')
+    embedder = aim.SimpleEmbedding(model='text-embedding-3-small')
 
     # calculate similarity by matching classes
     class_results = sc.objdict()
@@ -128,8 +128,8 @@ def plot_code_similarity(stem):
 
 if __name__ == '__main__':
     # files for code comparison
-    code_A = sa.paths.data / 'zombiesim' / 'zombie_ref.py' # v2.1.1
-    code_B = sa.paths.data / 'zombiesim' / 'zombie.py' # v0.5.2
+    code_A = aim.paths.data / 'zombiesim' / 'zombie_ref.py' # v2.1.1
+    code_B = aim.paths.data / 'zombiesim' / 'zombie.py' # v0.5.2
 
     # calculate similarity metrics between the two codes
     calculate_code_similarity(code_A, code_B)

@@ -1,7 +1,6 @@
 import pytest
-from starsim_ai.chat import SimpleQuery
 from pydantic import BaseModel, Field
-from starsim_ai.chat import JSONQuery
+from aimigrate.chat import JSONQuery, SimpleQuery
 
 # FILE: tests/test_chat.py
 

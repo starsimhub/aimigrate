@@ -1,12 +1,14 @@
 [project]
-name = "llmmigrate"
+name = "aimigrate"
 version = "0.1.0"
 description = "AI tools for migrating code"
 readme = "README.md"
 requires-python = ">=3.10"
 dependencies = [
+    "bitsandbytes>=0.45.0",
     "langchain-community>=0.3.14",
     "langchain-google-genai>=2.0.8",
+    "langchain-ollama>=0.2.2",
     "langchain-openai>=0.3.0",
     "sciris>=3.2.0",
 ]

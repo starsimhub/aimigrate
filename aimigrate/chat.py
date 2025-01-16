@@ -14,6 +14,7 @@ from langchain.output_parsers import CommaSeparatedListOutputParser
 
 from langchain_openai import ChatOpenAI
 from langchain_google_genai import ChatGoogleGenerativeAI
+from langchain_ollama import ChatOllama
 from langchain_community.llms import VLLM
 
 # from llama_index.core import VectorStoreIndex
@@ -27,11 +28,22 @@ from langchain_community.llms import VLLM
 
 __all__ = ["Models", "BaseQuery", "SimpleQuery", "JSONQuery", "CSVQuery"] #, "RAGQuery"]
 
+MODELS = sc.odict({
+    'gpt-3.5-turbo': 'gpt-3.5-turbo',
+    'gpt-4o': 'gpt-4o',
+    'gpt-4o-mini': 'gpt-4o-mini',
+    'o1-mini': 'o1-mini',
+    'o1-preview': 'o1-preview',
+    'o1': 'o1',
+    'llama3-8b': 'llama3',
+    'llama3-70b': 'llama3:70b'
+})
+
 
 class Models(Enum):
-    OPENAI = {'gpt-3.5-turbo', 'gpt-4o', 'gpt-4o-mini', 'o1-mini', 'o1-preview'}
-    GEMINI = {'gemini-1.5-flash', 'gemini-1.5-flash-8b', 'gemini-1.5-pro'}
-    HUGGINGFACE = {'meta-llama/Llama-2-7b-chat-hf', 'meta-llama/Llama-3.2-1B'}
+    OPENAI = {'gpt-3.5-turbo', 'gpt-4o', 'gpt-4o-mini', 'o1-mini', 'o1-preview', 'o1'}
+    GEMINI = {'gemini-1.5-flash', 'gemini-1.5-flash-8b', 'gemini-2.0-flash-exp'}
+    OLLAMA = {'llama3:70b', 'llama3'}
 
 
 class BaseQuery(sc.prettyobj):
@@ -50,13 +62,15 @@ class BaseQuery(sc.prettyobj):
         kwargs.update({'temperature':temperature})
 
         # Validate and parse the configuration
-        self.config = LLMConfig(model=model)
+        self.config = LLMConfig(model=MODELS[model])
 
         # Setup the LLM based on provider
         if self.config.provider == 'OPENAI':
             self.llm = ChatOpenAI(model=self.config.model, **kwargs)
         elif self.config.provider == 'GEMINI':
             self.llm = ChatGoogleGenerativeAI(model=self.config.model, **kwargs)
+        elif self.config.provider == 'OLLAMA':
+            self.llm = ChatOllama(model=self.config.model, **kwargs)
         elif self.config.provider == 'HUGGINGFACE':
             self.llm = VLLM(
                 model=self.config.model, **kwargs

@@ -3,30 +3,30 @@
 import os
 import json
 import tiktoken
-import starsim_ai as sa
+import aimigrate as aim
 
 # change cwd to the directory of this file
 os.chdir(os.path.dirname(__file__))
 
 def run_trial(model: str, report_token_count: bool = False):
     # file with the code
-    code_file = sa.paths.data / 'zombiesim' / 'zombie.py' # v0.5.2
+    code_file = aim.paths.data / 'zombiesim' / 'zombie.py' # v0.5.2
 
     # file with the diff
-    diff_file = sa.paths.data / 'zombiesim' / 'p_zombiesim.diff'
+    diff_file = aim.paths.data / 'zombiesim' / 'p_zombiesim.diff'
 
     # class for parsing the diff
     include_patterns = ["*.py", "starsim/diseases/sir.py"]; exclude_patterns = ["docs/*", "starsim/__init__.py", "starsim/diseases/*", "setup.py", "tests/*"] # Number of tokens 113743
-    git_diff = sa.GitDiff(diff_file, include_patterns=include_patterns, exclude_patterns=exclude_patterns)
+    git_diff = aim.GitDiff(diff_file, include_patterns=include_patterns, exclude_patterns=exclude_patterns)
     git_diff.summarize() # summarize
     if report_token_count:
         print(f'Number of tokens {git_diff.count_all_tokens(model=model)}')
 
     # class for parsin the code
-    python_code = sa.PythonCode(code_file)
+    python_code = aim.PythonCode(code_file)
 
     # chatter
-    chatter = sa.SimpleQuery(model=model)
+    chatter = aim.SimpleQuery(model=model)
 
     # encoder (for counting tokens)
     encoder = tiktoken.encoding_for_model("gpt-4o")
