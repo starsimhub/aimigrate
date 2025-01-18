@@ -10,16 +10,30 @@ import sciris as sc
 import aimigrate as aim
 import subprocess
 
-
 def get_python_files(source_dir, gitignore=False):
     """
     Recursively retrieves all Python files from the specified directory.
 
     Args:
         source_dir (str): The root directory to search for Python files.
+        gitignore (bool, optional): Whether to use the .gitignore file to filter files.
 
     Returns:
         list: A list of file paths to Python files found within the directory.
+    """    
+    return get_repository_files(source_dir, gitignore=gitignore, filter=['.py'])
+
+def get_repository_files(source_dir, gitignore=False, filter=['.py']):
+    """
+    Recursively retrieves all files from the specified directory.
+
+    Args:
+        source_dir (str): The root directory to search for Python files.
+        gitignore (bool, optional): Whether to use the .gitignore file to filter files.
+        filter (list of str, optional): A list of file suffixes to filter the files
+
+    Returns:
+        list: A list of file paths to files found within the directory.
     """
     if isinstance(source_dir, str):
         source_dir = sc.path(source_dir)
@@ -30,15 +44,25 @@ def get_python_files(source_dir, gitignore=False):
             files = subprocess.check_output("git ls-files", shell=True).splitlines()
             for file in files:
                 decoded = file.decode()
-                if decoded.endswith('.py'):
-                        python_files.append(decoded)
+                if filter is not None:
+                    for suffix in filter:
+                        if decoded.endswith(suffix):
+                            python_files.append(decoded)
+                            break
+                else:
+                    python_files.append(decoded)
+        python_files = [sc.path(files) for files in python_files]
     else:
         for root, _, files in os.walk(source_dir):
             for file in files:
-                if file.endswith('.py'):
+                if filter is not None:
+                    for suffix in filter:
+                        if file.endswith(suffix):
+                            python_files.append(os.path.join(root, file))
+                else:
                     python_files.append(os.path.join(root, file))
     
-    python_files = [sc.path(file).relative_to(source_dir) for file in python_files]
+        python_files = [sc.path(file).relative_to(source_dir) for file in python_files]
     return python_files
 
 
