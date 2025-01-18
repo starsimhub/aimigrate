@@ -40,7 +40,7 @@ def get_diff(migrator, file):
     migrator.log('Making the diff')
     migrator.parse_library()
     with aim.utils.TemporaryDirectoryChange(migrator.library):
-        result = sc.runcommand(f"git diff {'--patience' if migrator.patience else None} {migrator.v_from} {migrator.v_to} -- {file}")
+        result = sc.runcommand(f"git diff {'--patience' if migrator.patience else ''}{migrator.v_from} {migrator.v_to} -- {file}")
     return result
     
 def parse_diffs(migrator, methods_list):
@@ -97,12 +97,11 @@ class CodeFileWSubset(aim.CodeFile):
         return
 
 
-    def make_prompt(self, base_prompt, encoder, model, migrator):
+    def make_prompt(self, base_prompt, migrator):
         """ Create the prompt for the LLM """
         methods_list = self.parse_methods(migrator=migrator)
         diffs = parse_diffs(migrator, methods_list=methods_list)
         self.prompt = base_prompt.format("\n".join(diffs.values()), self.orig_str)
-        self.n_tokens = len(encoder.encode(self.prompt)) # Not strictly needed, but useful to know
         return
 
     def parse_methods(self, migrator):
@@ -166,7 +165,7 @@ class MigrateWSubset(aim.Migrate):
     def make_prompts(self):
         self.set_module_name()
         for code_file in self.code_files:
-            code_file.make_prompt(self.base_prompt, encoder=self.encoder, model=self.model, migrator=self)
+            code_file.make_prompt(self.base_prompt, migrator=self)
         return
         
     def parse_sources(self):

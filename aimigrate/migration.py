@@ -161,7 +161,6 @@ class Migrate(sc.prettyobj):
 
         # Populated fields
         self.git_diff = None
-        self.encoder = None
         self.chatter = None
         self.code_files = []
         self.errors = []
@@ -205,7 +204,7 @@ class Migrate(sc.prettyobj):
         else:
             self.parse_library()
             with aim.utils.TemporaryDirectoryChange(self.library):
-                self.diff = sc.runcommand(f"git diff {'--patience' if self.patience else None} {self.v_from} {self.v_to}")
+                self.diff = sc.runcommand(f"git diff {'--patience ' if self.patience else ''}{self.v_from} {self.v_to}")
         return
 
     def parse_diff(self):
