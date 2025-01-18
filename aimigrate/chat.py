@@ -17,6 +17,10 @@ from langchain_google_genai import ChatGoogleGenerativeAI
 from langchain_ollama import ChatOllama
 from langchain_community.llms import VLLM
 
+from langchain_community.callbacks import get_openai_callback
+
+import aimigrate as ai
+
 __all__ = ["Models", "BaseQuery", "SimpleQuery", "JSONQuery", "CSVQuery"]
 
 MODELS = sc.odict({
@@ -29,6 +33,7 @@ MODELS = sc.odict({
     'llama3-8b': 'llama3',
     'llama3-70b': 'llama3:70b',
     'codellama-70b': 'codellama:70b',
+    "gemini-2.0-flash-exp": "gemini-2.0-flash-exp",
 })
 
 
@@ -55,10 +60,13 @@ class BaseQuery(sc.prettyobj):
 
         # Validate and parse the configuration
         self.config = LLMConfig(model=MODELS[model])
+        self.get_callback = ai.utils.EmptyCallback
+        self.cost = {'total': 0, 'prompt': 0, 'completion': 0, 'cost': 0}
 
         # Setup the LLM based on provider
         if self.config.provider == 'OPENAI':
             self.llm = ChatOpenAI(model=self.config.model, **kwargs)
+            self.get_callback = get_openai_callback
         elif self.config.provider == 'GEMINI':
             self.llm = ChatGoogleGenerativeAI(model=self.config.model, **kwargs)
         elif self.config.provider == 'OLLAMA':
@@ -72,6 +80,12 @@ class BaseQuery(sc.prettyobj):
 
     def __call__(self, user_input):
         return self.llm.invoke(user_input)
+    
+    def update_cost(self, cb):
+        self.cost['total'] += cb.total_tokens
+        self.cost['prompt'] += cb.prompt_tokens
+        self.cost['completion'] += cb.completion_tokens
+        self.cost['cost'] += cb.total_cost        
 
 
 # Pydantic model for configuration
@@ -118,8 +132,10 @@ class SimpleQuery(BaseQuery):
         return self.chat(user_input)
 
     def chat(self, user_input):
-        response = self.chain.invoke(user_input)
-
+        with self.get_callback() as cb:
+            response = self.chain.invoke(user_input)
+        if not isinstance(cb, ai.utils.EmptyCallback):
+            self.update_cost(cb)
         return response
 
 
@@ -140,7 +156,10 @@ class CSVQuery(BaseQuery):
         return self.chat(user_input)
 
     def chat(self, user_input):
-        response = self.chain.invoke({"query": user_input})
+        with self.get_callback() as cb:
+            response = self.chain.invoke({"query": user_input})
+        if not isinstance(cb, ai.utils.EmptyCallback):
+            self.update_cost(cb)           
         return response
 
 
@@ -190,7 +209,10 @@ class JSONQuery(BaseQuery):
         return self.chat(user_input)
 
     def chat(self, user_input):
-        response = self.chain.invoke({"query": user_input})
+        with self.get_callback() as cb:
+            response = self.chain.invoke({"query": user_input})
+        if not isinstance(cb, ai.utils.EmptyCallback):
+            self.update_cost(cb)                    
         return response
 
     @staticmethod

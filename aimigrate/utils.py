@@ -32,6 +32,24 @@ class TemporaryDirectoryChange:
         os.chdir(self.original_dir)
 
 
+class EmptyCallback:
+    """
+    A context manager that does nothing when it is called.
+
+    Example:
+    ```python
+    with EmptyCallback() as callback:
+        # Code that runs without any effect from the callback
+        pass
+    ```
+    """
+    def __enter__(self):
+        return self
+
+    def __exit__(self, exc_type, exc_value, traceback):
+        pass
+
+
 def get_module_name():
     current_dir = os.path.abspath(os.getcwd())
     parent_dir = os.path.dirname(current_dir)
@@ -43,3 +61,5 @@ def get_module_name():
         return module_name
     else:
         return None
+    
+#

@@ -40,7 +40,7 @@ def get_diff(migrator, file):
     migrator.log('Making the diff')
     migrator.parse_library()
     with aim.utils.TemporaryDirectoryChange(migrator.library):
-        result = sc.runcommand(f'git diff {migrator.v_from} {migrator.v_to} -- {file}')
+        result = sc.runcommand(f"git diff {'--patience' if migrator.patience else None} {migrator.v_from} {migrator.v_to} -- {file}")
     return result
     
 def parse_diffs(migrator, methods_list):

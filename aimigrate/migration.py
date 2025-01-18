@@ -42,6 +42,7 @@ class CodeFile(sc.prettyobj):
         self.new_str = None
         self.error = None
         self.timer = None
+        self.cost = {'total': 0, 'prompt': 0, 'completion': 0, 'cost': 0}
         if process:
             self.process_code()
         return
@@ -137,7 +138,7 @@ class Migrate(sc.prettyobj):
     def __init__(self, source_dir, dest_dir, files=None, # Input and output folders
                  library=None, v_from=None, v_to=None, diff_file=None, diff=None, # Diff settings
                  model=None, model_kw=None, include=None, exclude=None, base_prompt=None, # Model settings
-                 parallel=False, verbose=True, save=True, die=False, run=False): # Run settings
+                 parallel=False, verbose=True, save=True, die=False, run=False, patience=None): # Run settings
 
         # Inputs
         self.source_dir = sc.path(source_dir)
@@ -157,6 +158,7 @@ class Migrate(sc.prettyobj):
         self.verbose = verbose
         self.save = save
         self.die = die
+        self.patience = patience
 
         # Populated fields
         self.git_diff = None
@@ -204,7 +206,7 @@ class Migrate(sc.prettyobj):
         else:
             self.parse_library()
             with aim.utils.TemporaryDirectoryChange(self.library):
-                self.diff = sc.runcommand(f'git diff {self.v_from} {self.v_to}')
+                self.diff = sc.runcommand(f"git diff {'--patience' if self.patience else None} {self.v_from} {self.v_to}")
         return
 
     def parse_diff(self, encoding='gpt-4o'):
