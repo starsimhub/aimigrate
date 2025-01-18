@@ -209,14 +209,11 @@ class Migrate(sc.prettyobj):
                 self.diff = sc.runcommand(f"git diff {'--patience' if self.patience else None} {self.v_from} {self.v_to}")
         return
 
-    def parse_diff(self, encoding='gpt-4o'):
+    def parse_diff(self):
         """ Parse the diff into the different pieces """
         self.log('Parsing the diff')
         self.git_diff = aim.GitDiff(self.diff, include_patterns=self.include, exclude_patterns=self.exclude)
         self.git_diff.summarize() # summarize
-        self.n_tokens = self.git_diff.count_all_tokens(model=encoding) # NB: not implemented for all models
-        if self.verbose:
-            print(f'Number of tokens {self.n_tokens}')
         return
 
     def parse_sources(self):
