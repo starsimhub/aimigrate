@@ -53,10 +53,9 @@ class CodeFile(sc.prettyobj):
         self.orig_str = self.python_code.get_code_string()
         return
 
-    def make_prompt(self, base_prompt, diff_string, encoder):
+    def make_prompt(self, base_prompt, diff_string):
         """ Create the prompt for the LLM """
         self.prompt = base_prompt.format(diff_string, self.orig_str)
-        self.n_tokens = len(encoder.encode(self.prompt)) # Not strictly needed, but useful to know
         return
 
     def run_query(self, chatter):
@@ -236,22 +235,21 @@ class Migrate(sc.prettyobj):
 
         return
 
-    def make_chatter(self, encoding='gpt-4o'):
+    def make_chatter(self):
         """ Create the LLM agent """
         self.log('Creating agent...')
-        self.encoder = tiktoken.encoding_for_model(encoding) # encoder (for counting tokens)
         self.chatter = aim.SimpleQuery(model=self.model, **self.model_kw)
         return
 
     def make_prompts(self):
         diff_string = self.git_diff.get_diff_string()
         for code_file in self.code_files:
-            code_file.make_prompt(self.base_prompt, diff_string, encoder=self.encoder)
+            code_file.make_prompt(self.base_prompt, diff_string)
         return
 
     def run_single(self, code_file):
         """ Where everything happens!! """
-        self.log(f'Migrating {code_file.file}: {code_file.n_tokens} tokens')
+        self.log(f'Migrating {code_file.file}')
         try:
             code_file.run(self.chatter, save=self.save)
         except Exception as E:
