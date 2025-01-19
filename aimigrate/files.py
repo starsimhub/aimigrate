@@ -127,6 +127,10 @@ class GitDiff(sc.prettyobj):
         current_file = None
         current_hunks = []
 
+        # If empty string return
+        if file == "":
+            return diffs
+
         # In case a filename is provided instead of the file contents
         if not isinstance(file, str) or '\n' not in file:
             with open(file, 'r') as f:
