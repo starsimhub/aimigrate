@@ -3,6 +3,7 @@ Core classes and functions for ssAI-Migrate
 """
 import re
 import types
+import fnmatch
 import tiktoken
 import sciris as sc
 import aimigrate as aim
@@ -203,8 +204,17 @@ class Migrate(sc.prettyobj):
                 self.diff = f.readlines()
         else:
             self.parse_library()
+            library_files = aim.files.get_python_files(self.library, gitignore=True)
+            self.diff=''
             with aim.utils.TemporaryDirectoryChange(self.library):
-                self.diff = sc.runcommand(f"git diff {'--patience ' if self.patience else ''}{self.v_from} {self.v_to}")
+                for current_file in library_files:
+                    if self.include and not any(fnmatch.fnmatch(current_file, pattern) for pattern in self.include):
+                        continue
+                    elif self.exclude and any(fnmatch.fnmatch(current_file, pattern) for pattern in self.exclude):
+                        continue
+                    else:
+                        print("adding {}".format(current_file))
+                        self.diff += sc.runcommand(f"git diff {'--patience ' if self.patience else ''}{self.v_from} {self.v_to} -- {current_file}")
         return
 
     def parse_diff(self):
