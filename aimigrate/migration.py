@@ -1,5 +1,5 @@
 """
-Core classes and functions for ssAI-Migrate
+Migrate using diff
 """
 import re
 import types
@@ -15,13 +15,13 @@ default_include = ["*.py"]
 default_exclude = ["__init__.py", "setup.py"]
 
 default_base_prompt = '''
-Here is the diff information for an update to the starsim (ss) package:
+Here is the diff information for an update to the {library} ({library_alias}) library:
 ------
-{}
+{reference}
 ------
-Please refactor the below code to maintain compatibility with the starsim (ss) code:
+Please refactor the below code to maintain compatibility with the {library} library:
 ------
-{}
+{source}
 ------
 Refactored code:
 '''
@@ -54,9 +54,13 @@ class CodeFile(sc.prettyobj):
         self.orig_str = self.python_code.get_code_string()
         return
 
-    def make_prompt(self, base_prompt, diff_string):
+    def make_prompt(self, base_prompt, diff_string, encoder=None):
         """ Create the prompt for the LLM """
-        self.prompt = base_prompt.format(diff_string, self.orig_str)
+        self.prompt = base_prompt.format(reference=diff_string, source=self.orig_str)
+        if encoder is not None:
+            self.n_tokens = len(encoder.encode(self.prompt)) # Not strictly needed, but useful to know
+        else:
+            self.n_tokens = -1
         return
 
     def run_query(self, chatter):
@@ -136,9 +140,9 @@ class Migrate(sc.prettyobj):
         M.run()
     """
     def __init__(self, source_dir, dest_dir, files=None, # Input and output folders
-                 library=None, v_from=None, v_to=None, diff_file=None, diff=None, # Diff settings
+                 library=None, v_from=None, v_to=None, diff_file=None, diff=None, patience=None,# Diff settings
                  model=None, model_kw=None, include=None, exclude=None, base_prompt=None, # Model settings
-                 parallel=False, verbose=True, save=True, die=False, run=False, patience=None): # Run settings
+                 parallel=False, verbose=True, save=True, die=False, run=False): # Run settings
 
         # Inputs
         self.source_dir = sc.path(source_dir)
@@ -163,6 +167,7 @@ class Migrate(sc.prettyobj):
         # Populated fields
         self.git_diff = None
         self.chatter = None
+        self.encoder = None
         self.code_files = []
         self.errors = []
 
@@ -178,7 +183,8 @@ class Migrate(sc.prettyobj):
                 default=print,
                 red=sc.printred,
                 green=sc.printgreen,
-                blue=sc.printcyan
+                blue=sc.printcyan,
+                yellow=sc.printyellow
             )[color]
             printfunc(string)
         return
@@ -213,7 +219,6 @@ class Migrate(sc.prettyobj):
                     elif self.exclude and any(fnmatch.fnmatch(current_file, pattern) for pattern in self.exclude):
                         continue
                     else:
-                        print("adding {}".format(current_file))
                         self.diff += sc.runcommand(f"git diff {'--patience ' if self.patience else ''}{self.v_from} {self.v_to} -- {current_file}")
         return
 
@@ -222,6 +227,9 @@ class Migrate(sc.prettyobj):
         self.log('Parsing the diff')
         self.git_diff = aim.GitDiff(self.diff, include_patterns=self.include, exclude_patterns=self.exclude)
         self.git_diff.summarize() # summarize
+        self.n_tokens = self.git_diff.count_all_tokens(model=self.model) # NB: not implemented for all models
+        if self.verbose and (self.n_tokens > -1):
+            print(f'Number of tokens in the diff: {self.n_tokens}')        
         return
 
     def parse_sources(self):
@@ -243,6 +251,14 @@ class Migrate(sc.prettyobj):
             self.code_files.append(code_file)
 
         return
+    
+    def make_encoder(self):
+        self.log('Creating encoder...')
+        try:
+            self.encoder = tiktoken.encoding_for_model(self.model) # encoder (for counting tokens)
+        except KeyError as E:
+            self.log(f'Could not create encoder for {self.model}: {E}', color='yellow')
+            self.encoder = None
 
     def make_chatter(self):
         """ Create the LLM agent """
@@ -270,6 +286,7 @@ class Migrate(sc.prettyobj):
     def run(self):
         """ Run all steps of the process """
         self.log(f'\nStarting migration of {self.source_dir}', color='blue')
+        self.make_encoder()
         self.make_diff()
         self.parse_diff()
         self.parse_sources()

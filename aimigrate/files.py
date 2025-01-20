@@ -97,8 +97,11 @@ class GitDiff(sc.prettyobj):
 
     def count_all_tokens(self, model="gpt-4o"):
         """ Count the total number of tokens in the diff (all hunks) """
-        encoding = tiktoken.encoding_for_model(model)
-        return len(encoding.encode(self.get_diff_string()))
+        try:
+            encoding = tiktoken.encoding_for_model(model)
+            return len(encoding.encode(self.get_diff_string()))
+        except KeyError:
+            return -1
 
     def print_file_hunks(self, file):
         """
@@ -166,11 +169,11 @@ class GitDiff(sc.prettyobj):
                     current_hunks.append(''.join(current_hunks.pop()))
 
                 # Start a new hunk for the current file
-                current_hunks.append([line])
+                current_hunks.append([line.rstrip() + '\n'])
 
             elif current_hunks:
                 # Append line to current hunk if in a hunk
-                current_hunks[-1].append(line)
+                current_hunks[-1].append(line.rstrip() + '\n')
 
         # Save the last file and hunks if present
         if current_file and current_hunks:
