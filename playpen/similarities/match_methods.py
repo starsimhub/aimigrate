@@ -7,7 +7,7 @@ References:
 
 import os
 import json
-import starsim_ai as sa
+import aimigrate as aim
 
 # my original prompt
 prompt_string = '''
@@ -76,17 +76,17 @@ The dictionary keys and values should be strings formatted exactly as specified.
 os.chdir(os.path.dirname(__file__))
 
 # set the file names
-file_A = sa.paths.data / 'zombiesim' / 'zombie_ref.py' # v2.1.1
-file_B = sa.paths.data / 'zombiesim' / 'zombie.py' # v0.5.2
+file_A = aim.paths.data / 'zombiesim' / 'zombie_ref.py' # v2.1.1
+file_B = aim.paths.data / 'zombiesim' / 'zombie.py' # v0.5.2
 
 # load the code as strings
-code_A_str = sa.PythonCode(file_A).get_code_string()
-code_B_str = sa.PythonCode(file_B).get_code_string()
+code_A_str = aim.PythonCode(file_A).get_code_string()
+code_B_str = aim.PythonCode(file_B).get_code_string()
 
 prompt = new_prompt_string.format(code_A_str, code_B_str)
 
 parser = {}
-chatter = sa.JSONQuery(parser, model='gpt-4o-mini')
+chatter = aim.JSONQuery(parser, model='gpt-4o-mini')
 response = chatter(prompt)
 
 # save the response

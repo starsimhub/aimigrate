@@ -7,7 +7,7 @@ import json
 import sciris as sc
 import pandas as pd
 import numpy as np
-import starsim_ai as sa
+import aimigrate as aim
 import matplotlib.pyplot as plt
 
 from pathlib import Path
@@ -85,7 +85,7 @@ def match_methods(file_A, file_B, model='gpt-4o-mini', result_dir=None):
     prompt = prompt_string.format(code_A_str, code_B_str)
 
     parser = {}
-    chatter = sa.JSONQuery(parser, model=model)
+    chatter = aim.JSONQuery(parser, model=model)
     response = chatter(prompt)
 
     # save the response
@@ -102,7 +102,7 @@ def run_match_methods(result_dir):
     for file in code_files:
 
         # set the file names
-        file_A = sa.paths.data / 'zombiesim' / 'zombie_ref.py' # v2.1.1
+        file_A = aim.paths.data / 'zombiesim' / 'zombie_ref.py' # v2.1.1
         file_B = file
 
         print("Processing", file_B.stem)
@@ -116,7 +116,7 @@ def calculate_similarities(file_A, result_dir=None):
     print(f"Found {len(match_files)} match files")
 
     # create embedder
-    embedder = sa.SimpleEmbedding(model='text-embedding-3-small')
+    embedder = aim.SimpleEmbedding(model='text-embedding-3-small')
 
     for file in match_files:
         print("Processing", file)
@@ -136,8 +136,8 @@ def calculate_similarities(file_A, result_dir=None):
 
         # parse the code
         try:
-            classes_A = sa.PythonCode(file_A) # reference code
-            classes_B = sa.PythonCode(result_dir / f"{stem}.py") # comparison code
+            classes_A = aim.PythonCode(file_A) # reference code
+            classes_B = aim.PythonCode(result_dir / f"{stem}.py") # comparison code
 
             # calculate similarity by matching classes
             class_results = sc.objdict()
@@ -307,7 +307,7 @@ if __name__ == '__main__':
     run_match_methods(result_dir)
 
     # calculate similarities
-    calculate_similarities(sa.paths.data / 'zombiesim' / 'zombie_ref.py', result_dir=result_dir)
+    calculate_similarities(aim.paths.data / 'zombiesim' / 'zombie_ref.py', result_dir=result_dir)
 
     # plot results
     plot_class_results(result_dir)

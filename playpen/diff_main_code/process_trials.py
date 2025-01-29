@@ -6,7 +6,7 @@ import os
 import re
 import json
 from pathlib import Path
-import starsim_ai as sa
+import aimigrate as aim
 import matplotlib.pyplot as plt
 
 os.chdir(os.path.dirname(__file__))
@@ -15,7 +15,7 @@ os.chdir(os.path.dirname(__file__))
 result_dir = Path(__file__).parent / 'results'
 
 # file with the code
-code_file = sa.paths.data / 'zombiesim' / 'zombie.py' # v0.5.2
+code_file = aim.paths.data / 'zombiesim' / 'zombie.py' # v0.5.2
 
 # trial id
 trial_id = 'B' # or trial_id = 'A'

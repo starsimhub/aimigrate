@@ -1,11 +1,12 @@
 """
-Core classes and functions for ssAI-Migrate
+Migrate using diff
 """
 import re
 import types
+import fnmatch
 import tiktoken
 import sciris as sc
-import starsim_ai as ssai
+import aimigrate as aim
 
 __all__ = ['CodeFile', 'Migrate', 'migrate']
 
@@ -14,13 +15,13 @@ default_include = ["*.py"]
 default_exclude = ["__init__.py", "setup.py"]
 
 default_base_prompt = '''
-Here is the diff information for an update to the starsim (ss) package:
+Here is the diff information for an update to the {library} ({library_alias}) library:
 ------
-{}
+{reference}
 ------
-Please refactor the below code to maintain compatibility with the starsim (ss) code:
+Please refactor the below code to maintain compatibility with the {library} library:
 ------
-{}
+{source}
 ------
 Refactored code:
 '''
@@ -42,20 +43,24 @@ class CodeFile(sc.prettyobj):
         self.new_str = None
         self.error = None
         self.timer = None
+        self.cost = {'total': 0, 'prompt': 0, 'completion': 0, 'cost': 0}
         if process:
             self.process_code()
         return
 
     def process_code(self):
         """ Parse the Python file into a string """
-        self.python_code = ssai.PythonCode(self.source)
+        self.python_code = aim.PythonCode(self.source)
         self.orig_str = self.python_code.get_code_string()
         return
 
-    def make_prompt(self, base_prompt, diff_string, encoder):
+    def make_prompt(self, base_prompt, diff_string, encoder=None):
         """ Create the prompt for the LLM """
-        self.prompt = base_prompt.format(diff_string, self.orig_str)
-        self.n_tokens = len(encoder.encode(self.prompt)) # Not strictly needed, but useful to know
+        self.prompt = base_prompt.format(reference=diff_string, source=self.orig_str)
+        if encoder is not None:
+            self.n_tokens = len(encoder.encode(self.prompt)) # Not strictly needed, but useful to know
+        else:
+            self.n_tokens = -1
         return
 
     def run_query(self, chatter):
@@ -70,7 +75,15 @@ class CodeFile(sc.prettyobj):
         result_string = json['kwargs']['content']
         match_pattern = re.compile(r'```python(.*?)```', re.DOTALL)
         code_match = match_pattern.search(result_string)
-        self.new_str = code_match.group(1)
+        if code_match:
+            self.new_str = code_match.group(1)
+        else:
+            match_pattern = re.compile(r'```(.*?)```', re.DOTALL)
+            code_match = match_pattern.search(result_string)
+            if code_match:
+                self.new_str = code_match.group(1)
+            else:
+                self.new_str = result_string
         return
 
     def run(self, chatter, save=True):
@@ -127,7 +140,7 @@ class Migrate(sc.prettyobj):
         M.run()
     """
     def __init__(self, source_dir, dest_dir, files=None, # Input and output folders
-                 library=None, v_from=None, v_to=None, diff_file=None, diff=None, # Diff settings
+                 library=None, v_from=None, v_to=None, diff_file=None, diff=None, patience=None,# Diff settings
                  model=None, model_kw=None, include=None, exclude=None, base_prompt=None, # Model settings
                  parallel=False, verbose=True, save=True, die=False, run=False): # Run settings
 
@@ -149,11 +162,12 @@ class Migrate(sc.prettyobj):
         self.verbose = verbose
         self.save = save
         self.die = die
+        self.patience = patience
 
         # Populated fields
         self.git_diff = None
-        self.encoder = None
         self.chatter = None
+        self.encoder = None
         self.code_files = []
         self.errors = []
 
@@ -169,7 +183,8 @@ class Migrate(sc.prettyobj):
                 default=print,
                 red=sc.printred,
                 green=sc.printgreen,
-                blue=sc.printcyan
+                blue=sc.printcyan,
+                yellow=sc.printyellow
             )[color]
             printfunc(string)
         return
@@ -195,25 +210,33 @@ class Migrate(sc.prettyobj):
                 self.diff = f.readlines()
         else:
             self.parse_library()
-            with ssai.utils.TemporaryDirectoryChange(self.library):
-                self.diff = sc.runcommand(f'git diff {self.v_from} {self.v_to}')
+            library_files = aim.files.get_python_files(self.library, gitignore=True)
+            self.diff=''
+            with aim.utils.TemporaryDirectoryChange(self.library):
+                for current_file in library_files:
+                    if self.include and not any(fnmatch.fnmatch(current_file, pattern) for pattern in self.include):
+                        continue
+                    elif self.exclude and any(fnmatch.fnmatch(current_file, pattern) for pattern in self.exclude):
+                        continue
+                    else:
+                        self.diff += sc.runcommand(f"git diff {'--patience ' if self.patience else ''}{self.v_from} {self.v_to} -- {current_file}")
         return
 
-    def parse_diff(self, encoding='gpt-4o'):
+    def parse_diff(self):
         """ Parse the diff into the different pieces """
         self.log('Parsing the diff')
-        self.git_diff = ssai.GitDiff(self.diff, include_patterns=self.include, exclude_patterns=self.exclude)
+        self.git_diff = aim.GitDiff(self.diff, include_patterns=self.include, exclude_patterns=self.exclude)
         self.git_diff.summarize() # summarize
-        self.n_tokens = self.git_diff.count_all_tokens(model=encoding) # NB: not implemented for all models
-        if self.verbose:
-            print(f'Number of tokens {self.n_tokens}')
+        self.n_tokens = self.git_diff.count_all_tokens(model=self.model) # NB: not implemented for all models
+        if self.verbose and (self.n_tokens > -1):
+            print(f'Number of tokens in the diff: {self.n_tokens}')        
         return
 
     def parse_sources(self):
         """ Find the supplied files and parse them """
         self.log('Parsing source files')
         if self.files is None:
-            self.files = ssai.get_python_files(self.source_dir)
+            self.files = aim.get_python_files(self.source_dir)
         else:
             self.files = sc.tolist(self.files)
 
@@ -228,23 +251,30 @@ class Migrate(sc.prettyobj):
             self.code_files.append(code_file)
 
         return
+    
+    def make_encoder(self):
+        self.log('Creating encoder...')
+        try:
+            self.encoder = tiktoken.encoding_for_model(self.model) # encoder (for counting tokens)
+        except KeyError as E:
+            self.log(f'Could not create encoder for {self.model}: {E}', color='yellow')
+            self.encoder = None
 
-    def make_chatter(self, encoding='gpt-4o'):
+    def make_chatter(self):
         """ Create the LLM agent """
         self.log('Creating agent...')
-        self.encoder = tiktoken.encoding_for_model(encoding) # encoder (for counting tokens)
-        self.chatter = ssai.SimpleQuery(model=self.model, **self.model_kw)
+        self.chatter = aim.SimpleQuery(model=self.model, **self.model_kw)
         return
 
     def make_prompts(self):
         diff_string = self.git_diff.get_diff_string()
         for code_file in self.code_files:
-            code_file.make_prompt(self.base_prompt, diff_string, encoder=self.encoder)
+            code_file.make_prompt(self.base_prompt, diff_string)
         return
 
     def run_single(self, code_file):
         """ Where everything happens!! """
-        self.log(f'Migrating {code_file.file}: {code_file.n_tokens} tokens')
+        self.log(f'Migrating {code_file.file}')
         try:
             code_file.run(self.chatter, save=self.save)
         except Exception as E:
@@ -256,6 +286,7 @@ class Migrate(sc.prettyobj):
     def run(self):
         """ Run all steps of the process """
         self.log(f'\nStarting migration of {self.source_dir}', color='blue')
+        self.make_encoder()
         self.make_diff()
         self.parse_diff()
         self.parse_sources()

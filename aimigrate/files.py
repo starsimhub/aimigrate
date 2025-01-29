@@ -7,9 +7,8 @@ import re
 import fnmatch
 import tiktoken
 import sciris as sc
-import starsim_ai as sa
+import aimigrate as aim
 import subprocess
-
 
 def get_python_files(source_dir, gitignore=False):
     """
@@ -17,34 +16,59 @@ def get_python_files(source_dir, gitignore=False):
 
     Args:
         source_dir (str): The root directory to search for Python files.
+        gitignore (bool, optional): Whether to use the .gitignore file to filter files.
 
     Returns:
         list: A list of file paths to Python files found within the directory.
+    """    
+    return get_repository_files(source_dir, gitignore=gitignore, filter=['.py'])
+
+def get_repository_files(source_dir, gitignore=False, filter=['.py']):
+    """
+    Recursively retrieves all files from the specified directory.
+
+    Args:
+        source_dir (str): The root directory to search for Python files.
+        gitignore (bool, optional): Whether to use the .gitignore file to filter files.
+        filter (list of str, optional): A list of file suffixes to filter the files
+
+    Returns:
+        list: A list of file paths to files found within the directory.
     """
     if isinstance(source_dir, str):
         source_dir = sc.path(source_dir)
 
     python_files = []
     if gitignore:
-        with sa.utils.TemporaryDirectoryChange(source_dir):
+        with aim.utils.TemporaryDirectoryChange(source_dir):
             files = subprocess.check_output("git ls-files", shell=True).splitlines()
             for file in files:
                 decoded = file.decode()
-                if decoded.endswith('.py'):
-                        python_files.append(decoded)
+                if filter is not None:
+                    for suffix in filter:
+                        if decoded.endswith(suffix):
+                            python_files.append(decoded)
+                            break
+                else:
+                    python_files.append(decoded)
+        python_files = [sc.path(files) for files in python_files]
     else:
         for root, _, files in os.walk(source_dir):
             for file in files:
-                if file.endswith('.py'):
+                if filter is not None:
+                    for suffix in filter:
+                        if file.endswith(suffix):
+                            python_files.append(os.path.join(root, file))
+                else:
                     python_files.append(os.path.join(root, file))
     
-    python_files = [sc.path(file).relative_to(source_dir) for file in python_files]
+        python_files = [sc.path(file).relative_to(source_dir) for file in python_files]
     return python_files
 
 
 class GitDiff(sc.prettyobj):
     """
-    Create and parse the git diff
+    Parse the git diff
     """
 
     def __init__(self, file, include_patterns=None, exclude_patterns=None):
@@ -73,8 +97,11 @@ class GitDiff(sc.prettyobj):
 
     def count_all_tokens(self, model="gpt-4o"):
         """ Count the total number of tokens in the diff (all hunks) """
-        encoding = tiktoken.encoding_for_model(model)
-        return len(encoding.encode(self.get_diff_string()))
+        try:
+            encoding = tiktoken.encoding_for_model(model)
+            return len(encoding.encode(self.get_diff_string()))
+        except KeyError:
+            return -1
 
     def print_file_hunks(self, file):
         """
@@ -102,6 +129,10 @@ class GitDiff(sc.prettyobj):
         diffs = []
         current_file = None
         current_hunks = []
+
+        # If empty string return
+        if file == "":
+            return diffs
 
         # In case a filename is provided instead of the file contents
         if not isinstance(file, str) or '\n' not in file:
@@ -138,11 +169,11 @@ class GitDiff(sc.prettyobj):
                     current_hunks.append(''.join(current_hunks.pop()))
 
                 # Start a new hunk for the current file
-                current_hunks.append([line])
+                current_hunks.append([line.rstrip() + '\n'])
 
             elif current_hunks:
                 # Append line to current hunk if in a hunk
-                current_hunks[-1].append(line)
+                current_hunks[-1].append(line.rstrip() + '\n')
 
         # Save the last file and hunks if present
         if current_file and current_hunks:
@@ -174,7 +205,7 @@ class PythonCode(sc.prettyobj):
 
     def set_classes(self):
         tree = ast.parse(''.join(self.code_lines))
-        visitor = sa.ClassVisitor()
+        visitor = aim.ClassVisitor()
         visitor.visit(tree)
         self.classes = visitor.classes
         return
@@ -185,7 +216,7 @@ class PythonCode(sc.prettyobj):
             if c['name'] == name:
                 class_code_list = self.code_lines[c['lineno']-1:c['end_lineno']+1]
                 tree = ast.parse(''.join(class_code_list))
-                visitor = sa.MethodVisitor()
+                visitor = aim.MethodVisitor()
                 visitor.visit(tree)
                 return class_code_list, visitor
         raise ValueError(f"Class {name} not found")

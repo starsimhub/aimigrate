@@ -9,7 +9,7 @@ import numpy as np
 from pathlib import Path
 import matplotlib.pyplot as pyplot
 
-import starsim_ai as sa
+import aimigrate as aim
 import starsim as ss
 
 os.chdir(os.path.dirname(__file__))
@@ -81,7 +81,7 @@ def test_basic_zombie(module):
 result_dir = Path(__file__).parent / 'results'
 
 # file with the code
-code_file = sa.paths.data / 'zombiesim' / 'zombie.py' # v0.5.2
+code_file = aim.paths.data / 'zombiesim' / 'zombie.py' # v0.5.2
 
 # trial id
 trial_id = 'B' # or trial_id = 'A'

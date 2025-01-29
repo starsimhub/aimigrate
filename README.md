@@ -35,18 +35,14 @@ export GEMINI_API_KEY=$(cat ~/gemini_api_key)
 
 **DO NOT UNDER ANY CIRCUMSTANCE SHARE OR UPLOAD YOUR API KEY!!!!!!!!!!!!!!!!**
 
-
 ## Usage
-
-
-### ssAI-Migrate
 
 Let's say we have a project *Zombiesim* that we want to migrate from Starsim v1 (v1.0.3) to v2 (v2.2.0). Typical usage is to migrate all the files in a folder to a new folder:
 ```py
 import starsim as ss
-import starsim_ai as ssai
+import aimigrate as aim
 
-ssai.migrate(
+aim.migrate(
     starsim = ss, # can also be the path to the starsim folder, which must be the cloned repo (not from pypi)
     from_version = 'v1.0.3', # can be any valid git tag or hash
     to_version = 'v2.2.0',
@@ -56,7 +52,5 @@ ssai.migrate(
 )
 ```
 
-
-### ssAI-Copilot
-
-Coming soon.
+**Running local models**:
+We use `ollama` to run models locally. To start open a terminal run `ollama serve`. If it is your first time running the model you'll need to pull it first (e.g., `ollama run llama3`).
