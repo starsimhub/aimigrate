@@ -34,7 +34,7 @@ Refactored code:
 class MigrateRepo(aim.CoreMigrate):
 
     def __init__(self, source_dir, dest_dir, files=None, # Input and output folders
-                 library=None, library_alias=None, v_from=None, v_to=None,  # Migration settings
+                 library=None, library_alias=None, v_from=None, v_to=None,  filter=None,# Migration settings
                  include=None, exclude=None, diff_file=None, diff=None, patience=None, # Diff settings
                  model=None, model_kw=None, base_prompt=None, # Model settings
                  parallel=False, verbose=True, save=True, die=False, run=False): # Run settings
@@ -54,6 +54,7 @@ class MigrateRepo(aim.CoreMigrate):
         self.model = model
         self.model_kw = sc.mergedicts(model_kw)
         self.base_prompt = sc.ifelse(base_prompt, default_base_prompt)
+        self.filter = sc.ifelse(filter, [".py"])
         self.parallel = parallel
         self.verbose = verbose
         self.save = save
@@ -98,7 +99,7 @@ class MigrateRepo(aim.CoreMigrate):
         self.log("Getting the repository files")
         self.parse_library()
         self.repo_files = []
-        all_repo_files = aim.files.get_python_files(self.library, gitignore=True)
+        all_repo_files = aim.files.get_python_files(self.library, gitignore=True, filter=self.filter)
         for current_file in all_repo_files:
             if self.include and not any(fnmatch.fnmatch(current_file, pattern) for pattern in self.include):
                 continue

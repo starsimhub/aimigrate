@@ -32,7 +32,7 @@ class MigrateDiff(aim.CoreMigrate):
 
     def __init__(self, source_dir, dest_dir, files=None, # Input and output folders
                  library=None, library_alias=None, v_from=None, v_to=None,  # Migration settings
-                 include=None, exclude=None, diff_file=None, diff=None, patience=None, # Diff settings
+                 include=None, exclude=None, diff_file=None, diff=None, patience=None, filter=None, # Diff settings
                  model=None, model_kw=None, base_prompt=None, # Model settings
                  parallel=False, verbose=True, save=True, die=False, run=False): # Run settings
         # Inputs
@@ -51,6 +51,7 @@ class MigrateDiff(aim.CoreMigrate):
         self.model = model
         self.model_kw = sc.mergedicts(model_kw)
         self.base_prompt = sc.ifelse(base_prompt, default_base_prompt)
+        self.filter = sc.ifelse(filter, [".py"])
         self.parallel = parallel
         self.verbose = verbose
         self.save = save
@@ -76,7 +77,7 @@ class MigrateDiff(aim.CoreMigrate):
                 self.diff = f.readlines()
         else:
             self.parse_library()
-            library_files = aim.files.get_python_files(self.library, gitignore=True)
+            library_files = aim.files.get_python_files(self.library, gitignore=True, filter=self.filter)
             self.diff=''
             with aim.utils.TemporaryDirectoryChange(self.library):
                 for current_file in library_files:

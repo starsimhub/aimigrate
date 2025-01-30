@@ -10,7 +10,7 @@ import sciris as sc
 import aimigrate as aim
 import subprocess
 
-def get_python_files(source_dir, gitignore=False):
+def get_python_files(source_dir, gitignore=False, filter=['.py']):
     """
     Recursively retrieves all Python files from the specified directory.
 
@@ -21,7 +21,7 @@ def get_python_files(source_dir, gitignore=False):
     Returns:
         list: A list of file paths to Python files found within the directory.
     """    
-    return get_repository_files(source_dir, gitignore=gitignore, filter=['.py'])
+    return get_repository_files(source_dir, gitignore=gitignore, filter=filter)
 
 def get_repository_files(source_dir, gitignore=False, filter=['.py']):
     """
@@ -92,7 +92,7 @@ class GitDiff(sc.prettyobj):
         if file is not None:
             return ''.join([''.join(diff['hunks']) for diff in self.diffs if diff["file"] == file])
         else:
-            return ''.join([''.join(diff['hunks']) for diff in self.diffs])
+            return ''.join(['\nFile:'+diff['file']+'\n:'+''.join(diff['hunks']) for diff in self.diffs])
 
 
     def count_all_tokens(self, model="gpt-4o"):
