@@ -13,7 +13,7 @@ DEFAULT_INCLUDE = ["*.py"]
 DEFAULT_EXCLUDE = ["__init__.py", "setup.py"]
 
 DEFAULT_BASE_PROMPT = """
-Below is some code for the {library} ({library_alias}) library:
+Below is some code for the {library}{library_alias} library:
 
 ```
 {library_code}
@@ -156,7 +156,7 @@ class MigrateRepo(aim.CoreMigrate):
         for code_file in self.code_files:
             code_file.make_prompt(self.base_prompt,
                                   prompt_kwargs = {'library':self.library.stem,
-                                                   'library_alias':self.library_alias,
+                                                   'library_alias': f' ({self.library_alias })'if self.library_alias else '',
                                                     'library_code':self.repo_string},
                                   encoder=self.encoder)
         return
