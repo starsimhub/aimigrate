@@ -41,8 +41,6 @@ class MigrateRepo(aim.CoreMigrate):
         library_alias (str): string to use as the alias for the library
         v_from (str): the git hash or version of Starsim that the code is currently written in
         v_to (str): the git hash or version of Starsim that the new code should be written in
-        diff_file (str): if provided, load this diff file instead of computing it via library/v_from/v_to, i.e. git diff v1.0.3 v2.2.0 > diff_file
-        diff (str): if provided, use this diff rather than loading it from file
         model (str): the LLM to use
         model_kw (dict): any keywords to pass to the model
         include (list): the list of files to include from the diff
@@ -70,7 +68,7 @@ class MigrateRepo(aim.CoreMigrate):
     """
     def __init__(self, source_dir, dest_dir, files=None, # Input and output folders
                  library=None, library_alias=None, v_from=None, v_to=None,  filter=None,# Migration settings
-                 include=None, exclude=None, diff_file=None, diff=None, patience=None, # Diff settings
+                 include=None, exclude=None, # Library settings
                  model=None, model_kw=None, base_prompt=None, # Model settings
                  parallel=False, verbose=True, save=True, die=False, run=False): # Run settings
         # Inputs
@@ -82,10 +80,7 @@ class MigrateRepo(aim.CoreMigrate):
         self.v_from = v_from
         self.v_to = v_to
         self.include = sc.ifelse(include, DEFAULT_INCLUDE)
-        self.exclude = sc.ifelse(exclude, DEFAULT_EXCLUDE)        
-        self.diff_file = diff_file
-        self.diff = diff
-        self.patience = patience                
+        self.exclude = sc.ifelse(exclude, DEFAULT_EXCLUDE)                 
         self.model = model
         self.model_kw = sc.mergedicts(model_kw)
         self.base_prompt = sc.ifelse(base_prompt, DEFAULT_BASE_PROMPT)
