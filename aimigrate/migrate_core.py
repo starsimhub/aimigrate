@@ -1,5 +1,4 @@
 import re
-import types
 import tiktoken
 import sciris as sc
 import aimigrate as aim
@@ -143,17 +142,15 @@ class CoreCodeFile(sc.prettyobj):
         """ Extract code from the response object """
         json = self.response.to_json()
         result_string = json['kwargs']['content']
-        match_pattern = re.compile(r'```python(.*?)```', re.DOTALL)
-        code_match = match_pattern.search(result_string)
+        match_patterns = [r'```python(.*?)```', r'```(.*?)```']
+        for match_pattern in match_patterns:
+            code_match = re.compile(match_pattern, re.DOTALL).search(result_string)
+            if code_match:
+                break
         if code_match:
             self.new_str = code_match.group(1)
         else:
-            match_pattern = re.compile(r'```(.*?)```', re.DOTALL)
-            code_match = match_pattern.search(result_string)
-            if code_match:
-                self.new_str = code_match.group(1)
-            else:
-                self.new_str = result_string
+            self.new_str = result_string
         return
 
     def run(self, chatter, save=True):
