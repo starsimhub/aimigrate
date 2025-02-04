@@ -114,22 +114,16 @@ class MigrateRepo(aim.CoreMigrate):
         # run
         self._run()            
 
-    def parse_library(self):
-        """ Extract the right folder for library """
-        self.log('Parsing library folder')
-        if isinstance(self.library, types.ModuleType):
-            self.library = sc.thispath(self.library)
-        self.library = sc.path(self.library)
-        if not self.library.is_dir():
-            errormsg = f'The library must be supplied as the module or the folder path, not {self.library}'
-            raise FileNotFoundError(errormsg)
-        return
-
     def get_repo_files(self):
         self.log("Getting the repository files")
         self.parse_library()
         self.repo_files = []
-        all_repo_files = aim.files.get_python_files(self.library, gitignore=True, filter=self.filter)
+        with aim.utils.TemporaryDirectoryChange(self.library):
+            # get current git commit
+            current_head = sc.runcommand("git rev-parse HEAD")
+            assert not sc.runcommand(f"git checkout {self.v_to}").startswith('error'), 'Invalid v_to'
+            all_repo_files = aim.files.get_python_files(self.library, gitignore=True, filter=self.filter)
+            assert not sc.runcommand(f"git checkout {current_head}").startswith('error'), 'Error checking out previous commit'
         for current_file in all_repo_files:
             if self.include and not any(fnmatch.fnmatch(current_file, pattern) for pattern in self.include):
                 continue
@@ -143,7 +137,7 @@ class MigrateRepo(aim.CoreMigrate):
         self.repo_string = ''
         for current_file in self.repo_files:
             with open(self.library / current_file, 'r') as f:
-                self.repo_string += """FILENAME: {file_name}\n'''python\n {code} '''\n""".format(file_name=current_file, code=f.read())
+                self.repo_string += """File: {file_name}\n'''\n {code} '''\n""".format(file_name=current_file, code=f.read())
         if self.encoder is not None:
             self.n_tokens = len(self.encoder.encode(self.repo_string))
         else:
@@ -156,7 +150,7 @@ class MigrateRepo(aim.CoreMigrate):
         for code_file in self.code_files:
             code_file.make_prompt(self.base_prompt,
                                   prompt_kwargs = {'library':self.library.stem,
-                                                   'library_alias': f' ({self.library_alias })'if self.library_alias else '',
+                                                   'library_alias': f' ({self.library_alias })' if self.library_alias else '',
                                                     'library_code':self.repo_string},
                                   encoder=self.encoder)
         return

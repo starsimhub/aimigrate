@@ -1,4 +1,5 @@
 import re
+import types
 import tiktoken
 import sciris as sc
 import aimigrate as aim
@@ -94,6 +95,17 @@ class CoreMigrate(sc.prettyobj):
         self.chatter = aim.SimpleQuery(model=self.model, **self.model_kw)
         return
     
+    def parse_library(self):
+        """ Extract the right folder for library """
+        self.log('Parsing library folder')
+        if isinstance(self.library, types.ModuleType):
+            self.library = sc.thispath(self.library).parent
+        self.library = sc.path(self.library)
+        if not self.library.is_dir():
+            errormsg = f'The library must be supplied as the module or the folder path, not {self.library}'
+            raise FileNotFoundError(errormsg)
+        return
+        
 class CoreCodeFile(sc.prettyobj):
     """
     A class to hold the original and migrated code
