@@ -12,7 +12,6 @@ dependencies = [
     "langchain-ollama>=0.2.2",
     "langchain-openai>=0.3.0",
     "sciris>=3.2.0",
-    "vllm>=0.6.6.post1",
 ]
 
 [build-system]
