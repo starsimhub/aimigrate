@@ -162,8 +162,7 @@ class CoreCodeFile(sc.prettyobj):
 
     def parse_response(self):
         """Extract code from the response object"""
-        json = self.response.to_json()
-        result_string = json["kwargs"]["content"]
+        result_string = self.response
         match_patterns = [r"```python(.*?)```", r"```(.*?)```"]
         for match_pattern in match_patterns:
             code_match = re.compile(match_pattern, re.DOTALL).search(result_string)

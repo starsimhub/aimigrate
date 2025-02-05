@@ -63,7 +63,7 @@ class MigrateRepo(aim.CoreMigrate):
             library_alias = 'ss', # the alias to use for the library in the prompt (optional)
             v_from = 'v1.0', # can be any valid git tag or hash
             v_to = 'v2.0', # ditto
-            model = 'gpt-4o', # see aim.Models for list of allowed models
+            model = 'openai:gpt-4o', # use aisuite's provider:model syntax
         )
         M.run()
     """

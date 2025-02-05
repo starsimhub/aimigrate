@@ -66,7 +66,7 @@ class MigrateDiff(aim.CoreMigrate):
             library = ss, # can also be the path to the starsim folder, which must be the cloned repo (not from pypi)
             v_from = 'v1.0.3', # can be any valid git tag or hash
             v_to = 'v2.2.0', # ditto
-            model = 'gpt-4o', # see aim.Models for list of allowed models
+            model = 'openai:gpt-4o', # use aisuite's provider:model syntax
         )
         M.run()
     """
