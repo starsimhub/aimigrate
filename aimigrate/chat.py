@@ -2,7 +2,6 @@
 Define the different `Query` classes, which include the `chat()` interface.
 """
 
-import os
 from enum import Enum
 from typing import Dict, Union, Type
 from pydantic import BaseModel, Field, field_validator

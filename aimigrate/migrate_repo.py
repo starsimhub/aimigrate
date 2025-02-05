@@ -1,7 +1,6 @@
 """
 Migrate using the code in the target libarary as context.
 """
-import types
 import fnmatch
 import sciris as sc
 import aimigrate as aim
