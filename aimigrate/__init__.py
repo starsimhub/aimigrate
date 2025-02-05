@@ -1,7 +1,6 @@
 # ruff: noqa: F403, F401
 from .migrate_core import *
 from .code import *
-from .embeddings import *
 from .files import *
 from .chat import *
 from .migrate_diff import *
