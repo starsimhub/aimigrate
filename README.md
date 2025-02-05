@@ -34,8 +34,13 @@ aim.migrate(
     starsim = ss, # can also be the path to the folder, which must be the cloned repo (not from pypi)
     from_version = 'v1.0.3', # can be any valid git tag or hash
     to_version = 'v2.2.0', # can be any valid git tag or hash
-    model = 'gpt-4o', # see aim.model_options for list of allowed models
+    model = 'openai:gpt-4o', # use aisuite provider:model syntax
     source = '/path/to/your/code/folder', # folder with the code to migrate
     dest = '/path/to/migrated/folder', # folder to output migrated code into
 )
+```
+
+## Tests
+```
+uv run --group dev pytest -v test_*.py
 ```
