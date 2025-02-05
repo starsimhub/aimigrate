@@ -1,17 +1,18 @@
 """
 Migrate using diffs
 """
+
 import fnmatch
 import sciris as sc
 import aimigrate as aim
 
-__all__ = ['MigrateDiff']
+__all__ = ["MigrateDiff"]
 
 # TODO: figure out how to expand the context to not need to exclude files
 DEFAULT_INCLUDE = ["*.py"]
 DEFAULT_EXCLUDE = ["__init__.py", "setup.py"]
 
-DEFAULT_BASE_PROMPT = '''
+DEFAULT_BASE_PROMPT = """
 Here is the information for an update to the {library}{library_alias} library captured in a git diff:
 
 ```
@@ -26,7 +27,8 @@ Maintain the same style, functionality, and structure as the original code.
 ```
 
 Return your updated answer as a single code block embedded between three backticks (```).
-'''
+"""
+
 
 class MigrateDiff(aim.CoreMigrate):
     """
@@ -68,11 +70,32 @@ class MigrateDiff(aim.CoreMigrate):
         )
         M.run()
     """
-    def __init__(self, source_dir, dest_dir, files=None, # Input and output folders
-                 library=None, library_alias=None, v_from=None, v_to=None,  # Migration settings
-                 include=None, exclude=None, diff_file=None, diff=None, patience=None, diff_speed=False, filter=None, # Diff settings
-                 model=None, model_kw=None, base_prompt=None, # Model settings
-                 parallel=False, verbose=True, save=True, die=False, run=False): # Run settings
+
+    def __init__(
+        self,
+        source_dir,
+        dest_dir,
+        files=None,  # Input and output folders
+        library=None,
+        library_alias=None,
+        v_from=None,
+        v_to=None,  # Migration settings
+        include=None,
+        exclude=None,
+        diff_file=None,
+        diff=None,
+        patience=None,
+        diff_speed=False,
+        filter=None,  # Diff settings
+        model=None,
+        model_kw=None,
+        base_prompt=None,  # Model settings
+        parallel=False,
+        verbose=True,
+        save=True,
+        die=False,
+        run=False,
+    ):  # Run settings
         # Inputs
         self.source_dir = sc.path(source_dir)
         self.dest_dir = sc.path(dest_dir)
@@ -82,10 +105,10 @@ class MigrateDiff(aim.CoreMigrate):
         self.v_from = v_from
         self.v_to = v_to
         self.include = sc.ifelse(include, DEFAULT_INCLUDE)
-        self.exclude = sc.ifelse(exclude, DEFAULT_EXCLUDE)        
+        self.exclude = sc.ifelse(exclude, DEFAULT_EXCLUDE)
         self.diff_file = diff_file
         self.diff = diff
-        self.patience = patience                
+        self.patience = patience
         self.model = model
         self.model_kw = sc.mergedicts(model_kw)
         self.base_prompt = sc.ifelse(base_prompt, DEFAULT_BASE_PROMPT)
@@ -106,59 +129,89 @@ class MigrateDiff(aim.CoreMigrate):
         if run:
             self.run()
         return
-    
+
     def make_diff(self):
-        self.log('Making the diff')
+        self.log("Making the diff")
         if self.diff:
             return
         elif self.diff_file:
-            with open(self.diff_file, 'r') as f:
+            with open(self.diff_file, "r") as f:
                 self.diff = f.readlines()
         else:
             self.parse_library()
             if self.diff_speed:
-                self.diff=''
+                self.diff = ""
                 with aim.utils.TemporaryDirectoryChange(self.library):
                     # check that the revisions are good
-                    assert not sc.runcommand(f"git rev-parse --verify {self.v_from}").startswith('fatal'), 'Invalid v_from'
-                    assert not sc.runcommand(f"git rev-parse --verify {self.v_to}").startswith('fatal'), 'Invalid v_to'                    
+                    assert not sc.runcommand(
+                        f"git rev-parse --verify {self.v_from}"
+                    ).startswith("fatal"), "Invalid v_from"
+                    assert not sc.runcommand(
+                        f"git rev-parse --verify {self.v_to}"
+                    ).startswith("fatal"), "Invalid v_to"
                     # get current git commit
                     current_head = sc.runcommand("git rev-parse HEAD")
                     # get the files in the library
-                    library_files = aim.files.get_python_files(self.library, gitignore=True, filter=self.filter)
-                    assert not sc.runcommand(f"git checkout {current_head}").startswith('error'), 'Error checking out previous commit'
+                    library_files = aim.files.get_python_files(
+                        self.library, gitignore=True, filter=self.filter
+                    )
+                    assert not sc.runcommand(f"git checkout {current_head}").startswith(
+                        "error"
+                    ), "Error checking out previous commit"
                     # get the diff for each file that passes the include/exclude
                     for current_file in library_files:
-                        if self.include and not any(fnmatch.fnmatch(current_file, pattern) for pattern in self.include):
+                        if self.include and not any(
+                            fnmatch.fnmatch(current_file, pattern)
+                            for pattern in self.include
+                        ):
                             continue
-                        elif self.exclude and any(fnmatch.fnmatch(current_file, pattern) for pattern in self.exclude):
+                        elif self.exclude and any(
+                            fnmatch.fnmatch(current_file, pattern)
+                            for pattern in self.exclude
+                        ):
                             continue
                         else:
-                            self.diff += sc.runcommand(f"git diff {'--patience ' if self.patience else ''}{self.v_from} {self.v_to} -- {current_file}")
+                            self.diff += sc.runcommand(
+                                f"git diff {'--patience ' if self.patience else ''}{self.v_from} {self.v_to} -- {current_file}"
+                            )
             else:
                 with aim.utils.TemporaryDirectoryChange(self.library):
-                    assert not sc.runcommand(f"git rev-parse --verify {self.v_from}").startswith('fatal'), 'Invalid v_from'
-                    assert not sc.runcommand(f"git rev-parse --verify {self.v_to}").startswith('fatal'), 'Invalid v_to'                    
-                    self.diff = sc.runcommand(f'git diff {self.v_from} {self.v_to}')                
-    
-    def parse_diff(self):                   
-        self.log('Parsing the diff')
-        self.git_diff = aim.GitDiff(self.diff, include_patterns=self.include, exclude_patterns=self.exclude)
-        self.git_diff.summarize() # summarize
-        self.n_tokens = self.git_diff.count_all_tokens(model=self.model) # NB: not implemented for all models
+                    assert not sc.runcommand(
+                        f"git rev-parse --verify {self.v_from}"
+                    ).startswith("fatal"), "Invalid v_from"
+                    assert not sc.runcommand(
+                        f"git rev-parse --verify {self.v_to}"
+                    ).startswith("fatal"), "Invalid v_to"
+                    self.diff = sc.runcommand(f"git diff {self.v_from} {self.v_to}")
+
+    def parse_diff(self):
+        self.log("Parsing the diff")
+        self.git_diff = aim.GitDiff(
+            self.diff, include_patterns=self.include, exclude_patterns=self.exclude
+        )
+        self.git_diff.summarize()  # summarize
+        self.n_tokens = self.git_diff.count_all_tokens(
+            model=self.model
+        )  # NB: not implemented for all models
         if self.verbose and (self.n_tokens > -1):
-            print(f'Number of tokens in the diff: {self.n_tokens}')      
+            print(f"Number of tokens in the diff: {self.n_tokens}")
 
     def make_prompts(self):
         diff_string = self.git_diff.get_diff_string()
         for code_file in self.code_files:
-            code_file.make_prompt(self.base_prompt,
-                                  prompt_kwargs = {'library':self.library.stem,
-                                                   'library_alias':f' ({self.library_alias })' if self.library_alias else '',
-                                                    'diff':diff_string},
-                                  encoder=self.encoder)
+            code_file.make_prompt(
+                self.base_prompt,
+                prompt_kwargs={
+                    "library": self.library.stem,
+                    "library_alias": f" ({self.library_alias})"
+                    if self.library_alias
+                    else "",
+                    "diff": diff_string,
+                },
+                encoder=self.encoder,
+            )
         return
-                
+
     def run(self):
         # construct the diff
         self.make_diff()
@@ -169,4 +222,4 @@ class MigrateDiff(aim.CoreMigrate):
         # make the prompts
         self.make_prompts()
         # run
-        self._run()    
+        self._run()

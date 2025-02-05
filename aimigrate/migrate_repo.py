@@ -1,11 +1,12 @@
 """
 Migrate using the code in the target libarary as context.
 """
+
 import fnmatch
 import sciris as sc
 import aimigrate as aim
 
-__all__ = ['MigrateRepo']
+__all__ = ["MigrateRepo"]
 
 # TODO: figure out how to expand the context to not need to exclude files
 DEFAULT_INCLUDE = ["*.py"]
@@ -27,6 +28,7 @@ Maintain the same style, functionality, and structure as the original code.
 
 Return your updated answer as a single code block embedded between three backticks (```).
 """
+
 
 class MigrateRepo(aim.CoreMigrate):
     """
@@ -65,11 +67,28 @@ class MigrateRepo(aim.CoreMigrate):
         )
         M.run()
     """
-    def __init__(self, source_dir, dest_dir, files=None, # Input and output folders
-                 library=None, library_alias=None, v_from=None, v_to=None,  filter=None,# Migration settings
-                 include=None, exclude=None, # Library settings
-                 model=None, model_kw=None, base_prompt=None, # Model settings
-                 parallel=False, verbose=True, save=True, die=False, run=False): # Run settings
+
+    def __init__(
+        self,
+        source_dir,
+        dest_dir,
+        files=None,  # Input and output folders
+        library=None,
+        library_alias=None,
+        v_from=None,
+        v_to=None,
+        filter=None,  # Migration settings
+        include=None,
+        exclude=None,  # Library settings
+        model=None,
+        model_kw=None,
+        base_prompt=None,  # Model settings
+        parallel=False,
+        verbose=True,
+        save=True,
+        die=False,
+        run=False,
+    ):  # Run settings
         # Inputs
         self.source_dir = sc.path(source_dir)
         self.dest_dir = sc.path(dest_dir)
@@ -79,7 +98,7 @@ class MigrateRepo(aim.CoreMigrate):
         self.v_from = v_from
         self.v_to = v_to
         self.include = sc.ifelse(include, DEFAULT_INCLUDE)
-        self.exclude = sc.ifelse(exclude, DEFAULT_EXCLUDE)                 
+        self.exclude = sc.ifelse(exclude, DEFAULT_EXCLUDE)
         self.model = model
         self.model_kw = sc.mergedicts(model_kw)
         self.base_prompt = sc.ifelse(base_prompt, DEFAULT_BASE_PROMPT)
@@ -99,7 +118,7 @@ class MigrateRepo(aim.CoreMigrate):
         if run:
             self.run()
         return
-            
+
     def run(self):
         self.make_encoder()
         # get the repository files
@@ -111,7 +130,7 @@ class MigrateRepo(aim.CoreMigrate):
         # make the prompts
         self.make_prompts()
         # run
-        self._run()            
+        self._run()
 
     def get_repo_files(self):
         self.log("Getting the repository files")
@@ -120,36 +139,54 @@ class MigrateRepo(aim.CoreMigrate):
         with aim.utils.TemporaryDirectoryChange(self.library):
             # get current git commit
             current_head = sc.runcommand("git rev-parse HEAD")
-            assert not sc.runcommand(f"git checkout {self.v_to}").startswith('error'), 'Invalid v_to'
-            all_repo_files = aim.files.get_python_files(self.library, gitignore=True, filter=self.filter)
-            assert not sc.runcommand(f"git checkout {current_head}").startswith('error'), 'Error checking out previous commit'
+            assert not sc.runcommand(f"git checkout {self.v_to}").startswith("error"), (
+                "Invalid v_to"
+            )
+            all_repo_files = aim.files.get_python_files(
+                self.library, gitignore=True, filter=self.filter
+            )
+            assert not sc.runcommand(f"git checkout {current_head}").startswith(
+                "error"
+            ), "Error checking out previous commit"
         for current_file in all_repo_files:
-            if self.include and not any(fnmatch.fnmatch(current_file, pattern) for pattern in self.include):
+            if self.include and not any(
+                fnmatch.fnmatch(current_file, pattern) for pattern in self.include
+            ):
                 continue
-            elif self.exclude and any(fnmatch.fnmatch(current_file, pattern) for pattern in self.exclude):
+            elif self.exclude and any(
+                fnmatch.fnmatch(current_file, pattern) for pattern in self.exclude
+            ):
                 continue
             else:
                 self.repo_files.append(current_file)
 
-    def parse_repo_files(self):        
+    def parse_repo_files(self):
         self.log("Parsing repository files")
-        self.repo_string = ''
+        self.repo_string = ""
         for current_file in self.repo_files:
-            with open(self.library / current_file, 'r') as f:
-                self.repo_string += """File: {file_name}\n'''\n {code} '''\n""".format(file_name=current_file, code=f.read())
+            with open(self.library / current_file, "r") as f:
+                self.repo_string += """File: {file_name}\n'''\n {code} '''\n""".format(
+                    file_name=current_file, code=f.read()
+                )
         if self.encoder is not None:
             self.n_tokens = len(self.encoder.encode(self.repo_string))
         else:
             self.n_tokens = -1
         if self.verbose and (self.n_tokens > -1):
-            print(f'Number of tokens in repository files: {self.n_tokens}')        
+            print(f"Number of tokens in repository files: {self.n_tokens}")
         return
-    
+
     def make_prompts(self):
         for code_file in self.code_files:
-            code_file.make_prompt(self.base_prompt,
-                                  prompt_kwargs = {'library':self.library.stem,
-                                                   'library_alias': f' ({self.library_alias })' if self.library_alias else '',
-                                                    'library_code':self.repo_string},
-                                  encoder=self.encoder)
+            code_file.make_prompt(
+                self.base_prompt,
+                prompt_kwargs={
+                    "library": self.library.stem,
+                    "library_alias": f" ({self.library_alias})"
+                    if self.library_alias
+                    else "",
+                    "library_code": self.repo_string,
+                },
+                encoder=self.encoder,
+            )
         return

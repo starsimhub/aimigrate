@@ -23,28 +23,37 @@ import aimigrate as ai
 
 __all__ = ["Models", "BaseQuery", "SimpleQuery", "JSONQuery", "CSVQuery"]
 
-MODELS = sc.odict({
-    'gpt-3.5-turbo': 'gpt-3.5-turbo-0125',
-    'gpt-4o': 'gpt-4o-2024-08-06',
-    'gpt-4o-mini': 'gpt-4o-mini-2024-07-18',
-    'o1-mini': 'o1-mini-2024-09-12',
-    'o1-preview': 'o1-preview-2024-09-12',
-    'o1': 'o1-2024-12-17',
-    'llama3-8b': 'llama3',
-    'llama3-70b': 'llama3:70b',
-    'llama3-8b-128k': 'llama3:8b_128k',
-    'codellama-70b': 'codellama:70b',
-    "gemini-2.0-flash-exp": "gemini-2.0-flash-exp",
-    'claude-3.5-haiku':'claude-3-5-haiku-20241022',
-    'claude-3.5-sonnet':'claude-3-5-sonnet-20241022'
-})
+MODELS = sc.odict(
+    {
+        "gpt-3.5-turbo": "gpt-3.5-turbo-0125",
+        "gpt-4o": "gpt-4o-2024-08-06",
+        "gpt-4o-mini": "gpt-4o-mini-2024-07-18",
+        "o1-mini": "o1-mini-2024-09-12",
+        "o1-preview": "o1-preview-2024-09-12",
+        "o1": "o1-2024-12-17",
+        "llama3-8b": "llama3",
+        "llama3-70b": "llama3:70b",
+        "llama3-8b-128k": "llama3:8b_128k",
+        "codellama-70b": "codellama:70b",
+        "gemini-2.0-flash-exp": "gemini-2.0-flash-exp",
+        "claude-3.5-haiku": "claude-3-5-haiku-20241022",
+        "claude-3.5-sonnet": "claude-3-5-sonnet-20241022",
+    }
+)
 
 
 class Models(Enum):
-    OPENAI = {'gpt-3.5-turbo-0125', 'gpt-4o-2024-08-06', 'gpt-4o-mini-2024-07-18', 'o1-mini-2024-09-12', 'o1-preview-2024-09-12', 'o1-2024-12-17'}
-    GEMINI = {'gemini-1.5-flash', 'gemini-1.5-flash-8b', 'gemini-2.0-flash-exp'}
-    OLLAMA = {'llama3:70b', 'llama3', 'codellama:70b', 'llama3:8b_128k'}
-    ANTHROPIC = {'claude-3-5-haiku-20241022', 'claude-3-5-sonnet-20241022'}
+    OPENAI = {
+        "gpt-3.5-turbo-0125",
+        "gpt-4o-2024-08-06",
+        "gpt-4o-mini-2024-07-18",
+        "o1-mini-2024-09-12",
+        "o1-preview-2024-09-12",
+        "o1-2024-12-17",
+    }
+    GEMINI = {"gemini-1.5-flash", "gemini-1.5-flash-8b", "gemini-2.0-flash-exp"}
+    OLLAMA = {"llama3:70b", "llama3", "codellama:70b", "llama3:8b_128k"}
+    ANTHROPIC = {"claude-3-5-haiku-20241022", "claude-3-5-sonnet-20241022"}
 
 
 class BaseQuery(sc.prettyobj):
@@ -58,40 +67,39 @@ class BaseQuery(sc.prettyobj):
         timeout=None,
         max_retries=2,
     """
-    def __init__(self, model='gpt-3.5-turbo', temperature=0.7, **kwargs):
+
+    def __init__(self, model="gpt-3.5-turbo", temperature=0.7, **kwargs):
         # Update sampling temperature
-        kwargs.update({'temperature':temperature})
+        kwargs.update({"temperature": temperature})
 
         # Validate and parse the configuration
         self.config = LLMConfig(model=MODELS[model])
         self.get_callback = ai.utils.EmptyCallback
-        self.cost = {'total': 0, 'prompt': 0, 'completion': 0, 'cost': 0}
+        self.cost = {"total": 0, "prompt": 0, "completion": 0, "cost": 0}
 
         # Setup the LLM based on provider
-        if self.config.provider == 'OPENAI':
+        if self.config.provider == "OPENAI":
             self.llm = ChatOpenAI(model=self.config.model, **kwargs)
             self.get_callback = get_openai_callback
-        elif self.config.provider == 'GEMINI':
+        elif self.config.provider == "GEMINI":
             self.llm = ChatGoogleGenerativeAI(model=self.config.model, **kwargs)
-        elif self.config.provider == 'ANTHROPIC':
+        elif self.config.provider == "ANTHROPIC":
             self.llm = ChatAnthropic(model=self.config.model, **kwargs)
-        elif self.config.provider == 'OLLAMA':
+        elif self.config.provider == "OLLAMA":
             self.llm = ChatOllama(model=self.config.model, **kwargs)
-        elif self.config.provider == 'HUGGINGFACE':
-            self.llm = VLLM(
-                model=self.config.model, **kwargs
-            )
+        elif self.config.provider == "HUGGINGFACE":
+            self.llm = VLLM(model=self.config.model, **kwargs)
         else:
             raise ValueError(f"Unsupported provider. Choose {[e.name for e in Models]}")
 
     def __call__(self, user_input):
         return self.llm.invoke(user_input)
-    
+
     def update_cost(self, cb):
-        self.cost['total'] += cb.total_tokens
-        self.cost['prompt'] += cb.prompt_tokens
-        self.cost['completion'] += cb.completion_tokens
-        self.cost['cost'] += cb.total_cost        
+        self.cost["total"] += cb.total_tokens
+        self.cost["prompt"] += cb.prompt_tokens
+        self.cost["completion"] += cb.completion_tokens
+        self.cost["cost"] += cb.total_cost
 
 
 # Pydantic model for configuration
@@ -124,7 +132,8 @@ class SimpleQuery(BaseQuery):
     """
     A simple query interface to interact with an AI model.
     """
-    def __init__(self, model='gpt-3.5-turbo', **kwargs):
+
+    def __init__(self, model="gpt-3.5-turbo", **kwargs):
         super().__init__(model, **kwargs)
 
         # Setup the prompt and chain
@@ -146,7 +155,7 @@ class SimpleQuery(BaseQuery):
 
 
 class CSVQuery(BaseQuery):
-    def __init__(self, model='gpt-3.5-turbo', **kwargs):
+    def __init__(self, model="gpt-3.5-turbo", **kwargs):
         super().__init__(model, **kwargs)
         self.parser = CommaSeparatedListOutputParser()
         format_instructions = self.parser.get_format_instructions()
@@ -165,7 +174,7 @@ class CSVQuery(BaseQuery):
         with self.get_callback() as cb:
             response = self.chain.invoke({"query": user_input})
         if not isinstance(cb, ai.utils.EmptyCallback):
-            self.update_cost(cb)           
+            self.update_cost(cb)
         return response
 
 
@@ -188,7 +197,13 @@ class JSONQuery(BaseQuery):
     Reference:
     https://python.langchain.com/docs/how_to/output_parser_json/
     """
-    def __init__(self, parser: Union[Type[BaseModel], dict], model: str='gpt-3.5-turbo', **kwargs):
+
+    def __init__(
+        self,
+        parser: Union[Type[BaseModel], dict],
+        model: str = "gpt-3.5-turbo",
+        **kwargs,
+    ):
         """
         Initializes the JSONQuery instance.
 
@@ -200,14 +215,16 @@ class JSONQuery(BaseQuery):
 
         # Set up a parser + inject instructions into the prompt template.
         if isinstance(parser, dict):
-            parser = self.create_pydantic_model('Query', parser)
+            parser = self.create_pydantic_model("Query", parser)
         self.parser = JsonOutputParser(pydantic_object=parser)
 
         # Setup the prompt and chain
         self.prompt = PromptTemplate(
             template="Answer the user query.\n{format_instructions}\n{query}\n",
             input_variables=["query"],
-            partial_variables={"format_instructions": self.parser.get_format_instructions()},
+            partial_variables={
+                "format_instructions": self.parser.get_format_instructions()
+            },
         )
         self.chain = self.prompt | self.llm | self.parser
 
@@ -218,11 +235,13 @@ class JSONQuery(BaseQuery):
         with self.get_callback() as cb:
             response = self.chain.invoke({"query": user_input})
         if not isinstance(cb, ai.utils.EmptyCallback):
-            self.update_cost(cb)                    
+            self.update_cost(cb)
         return response
 
     @staticmethod
-    def create_pydantic_model(class_name: str, fields: Dict[str, str]) -> Type[BaseModel]:
+    def create_pydantic_model(
+        class_name: str, fields: Dict[str, str]
+    ) -> Type[BaseModel]:
         """
         Dynamically create a Pydantic model class.
 
@@ -235,7 +254,16 @@ class JSONQuery(BaseQuery):
             Type[BaseModel]: The dynamically created Pydantic model class.
         """
         # Prepare the annotations dictionary
-        annotations = {key: (str, Field(description=value)) for key, value in fields.items()}
+        annotations = {
+            key: (str, Field(description=value)) for key, value in fields.items()
+        }
 
         # Create the Pydantic model dynamically
-        return type(class_name, (BaseModel,), {"__annotations__": {k: v[0] for k, v in annotations.items()}, **{k: v[1] for k, v in annotations.items()}})
+        return type(
+            class_name,
+            (BaseModel,),
+            {
+                "__annotations__": {k: v[0] for k, v in annotations.items()},
+                **{k: v[1] for k, v in annotations.items()},
+            },
+        )

@@ -7,9 +7,15 @@ from pydantic import BaseModel, Field, field_validator
 from langchain_openai import OpenAIEmbeddings
 from langchain_google_genai import GoogleGenerativeAIEmbeddings
 
+
 class EmbeddingModels(Enum):
-    OPENAI = {'text-embedding-3-small', 'text-embedding-3-large', 'text-embedding-ada-002'}
-    GEMINI = {'models/text-embedding-004', 'models/embedding-001'}
+    OPENAI = {
+        "text-embedding-3-small",
+        "text-embedding-3-large",
+        "text-embedding-ada-002",
+    }
+    GEMINI = {"models/text-embedding-004", "models/embedding-001"}
+
 
 # Pydantic model for configuration
 class EmbeddingModelsConfig(BaseModel):
@@ -36,24 +42,28 @@ class EmbeddingModelsConfig(BaseModel):
                 return provider_enum.name
         raise ValueError(f"No provider found for model '{model}'.")
 
-class SimpleEmbedding():
+
+class SimpleEmbedding:
     """
     A simple interface to get an embedding
     """
-    def __init__(self, model='text-embedding-3-small'):
+
+    def __init__(self, model="text-embedding-3-small"):
         # Validate and parse the configuration
         self.config = EmbeddingModelsConfig(model=model)
 
         # Setup the embeddings based on provider
-        if self.config.provider == 'OPENAI':
+        if self.config.provider == "OPENAI":
             self.embeddings = OpenAIEmbeddings(model=self.config.model)
-        elif self.config.provider == 'GEMINI':
+        elif self.config.provider == "GEMINI":
             self.embeddings = GoogleGenerativeAIEmbeddings(model=self.config.model)
         else:
-            raise ValueError(f"Unsupported provider. Choose {[e.name for e in EmbeddingModels]}")
+            raise ValueError(
+                f"Unsupported provider. Choose {[e.name for e in EmbeddingModels]}"
+            )
 
     def get_embedding(self, input_text: str):
         return self.embeddings.embed_query(input_text)
-    
+
     def count_tokens(self, input_text: str):
         return len(input_text.split())
