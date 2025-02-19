@@ -1,6 +1,7 @@
 import os
 import importlib.util
 
+
 # Using a context manager to temporarily change the directory
 class TemporaryDirectoryChange:
     """
@@ -21,6 +22,7 @@ class TemporaryDirectoryChange:
         __enter__(): Changes the current working directory to `new_dir`.
         __exit__(exc_type, exc_value, traceback): Reverts the current working directory to `original_dir`.
     """
+
     def __init__(self, new_dir):
         self.new_dir = new_dir
         self.original_dir = os.getcwd()
@@ -43,6 +45,7 @@ class EmptyCallback:
         pass
     ```
     """
+
     def __enter__(self):
         return self
 
@@ -61,5 +64,6 @@ def get_module_name():
         return module_name
     else:
         return None
-    
+
+
 #

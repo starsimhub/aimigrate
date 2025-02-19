@@ -1,39 +1,27 @@
-# Starsim AI
+# AIMigrate
 
-Starsim AI (ssAI) has two parts: ssAI-Migrate helps migrate code between different versions of Starsim, while ssAI-Copilot (coming soon!) is a VSCode-integrated bespoke coding assistant.
-
-**Warning**: Setting up Starsim AI to run locally requires knowledge of machine learning libraries, API keys, etc. It is not like typing a question into ChatGPT. Please contact info@starsim.org for more information.
+AIMigrate helps migrate code to maintain compatability when one of your dependency packackages changes
 
 
-## Setup
-
-
-### 1. Install dependencies
-
-Dependencies can be installed via:
-```python
-pip install -e .
+## Installation
+```
+pip install aimigrate
 ```
 
-Or use `uv` or your environment manager of choice.
+### Configure LLM Provider
 
-*Note:* This project requires PyTorch, CUDA libraries, etc. For a typical system, ~2 GB of libraries will be downloaded.
+AIMigrate is compatabile with openai, gemini, and anthropic models. To use these tools you will need an API key. 
 
+- For Gemini, get your API key from: https://aistudio.google.com/apikey
+- For OpenAI, get your API key from: https://platform.openai.com/settings/organization/api-keys
+- For Anthropic, get your API key from: https://www.anthropic.com/api
 
-### 2. Configure OpenAI and/or Gemini
+Once you have these keys, we recommend using [python-dotenv](https://pypi.org/project/python-dotenv/) for managing your keys. Store them as environment variables `GEMINI_API_KEY`, `OPENAI_API_KEY`, or `ANTHROPIC_API_KEY` respective.
 
-To use these tools you will need an API key. Google/Gemini provides them for free, but you have to pay for one for OpenAI.
+**Running open weight (i.e., local) models**:
+You can also use `ollama` to run models locally. To start open a terminal run `ollama serve`. If it is your first time running the model you'll need to pull it first (e.g., `ollama run llama3`). You will likely need to [increase the context window](https://github.com/ollama/ollama/blob/main/docs/faq.md#:~:text=How%20can%20I%20specify%20the%20context%20window%20size%3F).
 
-For Gemini, get your API key from: https://aistudio.google.com/apikey
-
-For OpenAI, get your API key from: https://platform.openai.com/settings/organization/api-keys
-
-Once you have these keys, store them as environment variables `GEMINI_API_KEY` and `OPENAI_API_KEY`, respectively. If you use Linux or Mac, a good way to do this is to save them as a file on your computer, and then load them with e.g.:
-```bash
-export GEMINI_API_KEY=$(cat ~/gemini_api_key)
-```
-
-**DO NOT UNDER ANY CIRCUMSTANCE SHARE OR UPLOAD YOUR API KEY!!!!!!!!!!!!!!!!**
+**DO NOT UNDER ANY CIRCUMSTANCE SHARE OR UPLOAD TO GITHUB YOUR API KEY!**
 
 ## Usage
 
@@ -43,14 +31,16 @@ import starsim as ss
 import aimigrate as aim
 
 aim.migrate(
-    starsim = ss, # can also be the path to the starsim folder, which must be the cloned repo (not from pypi)
+    starsim = ss, # can also be the path to the folder, which must be the cloned repo (not from pypi)
     from_version = 'v1.0.3', # can be any valid git tag or hash
-    to_version = 'v2.2.0',
-    model = 'gpt-4o', # see ssai.model_options for list of allowed models
+    to_version = 'v2.2.0', # can be any valid git tag or hash
+    model = 'openai:gpt-4o', # use aisuite provider:model syntax
     source = '/path/to/your/code/folder', # folder with the code to migrate
     dest = '/path/to/migrated/folder', # folder to output migrated code into
 )
 ```
 
-**Running local models**:
-We use `ollama` to run models locally. To start open a terminal run `ollama serve`. If it is your first time running the model you'll need to pull it first (e.g., `ollama run llama3`).
+## Tests
+```
+uv run --group dev pytest -v test_*.py
+```
