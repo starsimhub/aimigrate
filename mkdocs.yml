@@ -3,5 +3,6 @@ nav:
   - Home: index.md
 
 plugins:
+  - search
   - mkdocs-autoapi
   - mkdocstrings
