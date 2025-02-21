@@ -10,7 +10,8 @@ class ClassVisitor(ast.NodeVisitor):
     """
     A visitor class that collects information about class definitions in an AST (Abstract Syntax Tree).
 
-    Example usage:
+    **Example usage**::
+
         script = '''
         class MyClass:
             def method(self):
@@ -52,7 +53,8 @@ class MethodVisitor(ast.NodeVisitor):
     A visitor class that collects information about methods in a specific class
     within an Abstract Syntax Tree (AST).
 
-    Example usage:
+    **Example usage**::
+    
         script = '''
         class MyClass:
             def method1(self):

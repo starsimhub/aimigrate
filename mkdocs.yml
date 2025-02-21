@@ -1,0 +1,13 @@
+site_name: AIMigrate
+nav:
+  - Home: index.md
+  - API: autoapi/aimigrate
+
+
+plugins:
+  - search
+  - mkdocs-autoapi:
+      autoapi_ignore:
+        - tests/**/*
+      autoapi_add_nav_entry: False
+  - mkdocstrings
