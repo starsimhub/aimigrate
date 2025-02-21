@@ -1,0 +1,846 @@
+<!DOCTYPE html>
+<html lang="en" data-bs-theme="light">
+    <head>
+        <meta charset="utf-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        
+        
+        
+        <link rel="shortcut icon" href="../../../img/favicon.ico">
+        <title>Migrate repo - AIMigrate</title>
+        <link href="../../../css/bootstrap.min.css" rel="stylesheet">
+        <link href="../../../css/fontawesome.min.css" rel="stylesheet">
+        <link href="../../../css/brands.min.css" rel="stylesheet">
+        <link href="../../../css/solid.min.css" rel="stylesheet">
+        <link href="../../../css/v4-font-face.min.css" rel="stylesheet">
+        <link href="../../../css/base.css" rel="stylesheet">
+        <link id="hljs-light" rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/github.min.css" >
+        <link id="hljs-dark" rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/github-dark.min.css" disabled>
+        <link href="../../../assets/_mkdocstrings.css" rel="stylesheet">
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/highlight.min.js"></script>
+        <script>hljs.highlightAll();</script> 
+    </head>
+
+    <body>
+        <div class="navbar fixed-top navbar-expand-lg navbar-dark bg-primary">
+            <div class="container">
+                <a class="navbar-brand" href="../../..">AIMigrate</a>
+                <!-- Expander button -->
+                <button type="button" class="navbar-toggler" data-bs-toggle="collapse" data-bs-target="#navbar-collapse" aria-controls="navbar-collapse" aria-expanded="false" aria-label="Toggle navigation">
+                    <span class="navbar-toggler-icon"></span>
+                </button>
+
+                <!-- Expanded navigation -->
+                <div id="navbar-collapse" class="navbar-collapse collapse">
+                        <!-- Main navigation -->
+                        <ul class="nav navbar-nav">
+                            <li class="nav-item">
+                                <a href="../../.." class="nav-link">Home</a>
+                            </li>
+                            <li class="nav-item">
+                                <a href=".." class="nav-link">API</a>
+                            </li>
+                        </ul>
+
+                    <ul class="nav navbar-nav ms-md-auto">
+                        <li class="nav-item">
+                            <a href="#" class="nav-link" data-bs-toggle="modal" data-bs-target="#mkdocs_search_modal">
+                                <i class="fa fa-search"></i> Search
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <div class="container">
+            <div class="row">
+                    <div class="col-md-3"><div class="navbar-expand-md bs-sidebar hidden-print affix" role="complementary">
+    <div class="navbar-header">
+        <button type="button" class="navbar-toggler collapsed" data-bs-toggle="collapse" data-bs-target="#toc-collapse" title="Table of Contents">
+            <span class="fa fa-angle-down"></span>
+        </button>
+    </div>
+
+    
+    <div id="toc-collapse" class="navbar-collapse collapse card bg-body-tertiary">
+        <ul class="nav flex-column">
+            
+            <li class="nav-item" data-bs-level="2"><a href="#aimigrate.migrate_repo" class="nav-link">migrate_repo</a>
+              <ul class="nav flex-column">
+              </ul>
+            </li>
+            
+            <li class="nav-item" data-bs-level="2"><a href="#aimigrate.migrate_repo.MigrateRepo" class="nav-link">MigrateRepo</a>
+              <ul class="nav flex-column">
+              </ul>
+            </li>
+        </ul>
+    </div>
+</div></div>
+                    <div class="col-md-9" role="main">
+
+<div class="doc doc-object doc-module">
+
+
+
+<a id="aimigrate.migrate_repo"></a>
+    <div class="doc doc-contents first">
+
+        <p>Migrate using the code in the target libarary as context.</p>
+
+
+
+
+
+
+
+
+  <div class="doc doc-children">
+
+
+
+
+
+
+
+
+<div class="doc doc-object doc-class">
+
+
+
+<h2 id="aimigrate.migrate_repo.MigrateRepo" class="doc doc-heading">
+            <code>MigrateRepo</code>
+
+
+</h2>
+
+
+    <div class="doc doc-contents ">
+            <p class="doc doc-class-bases">
+              Bases: <code><a class="autorefs autorefs-internal" title="aimigrate.CoreMigrate" href="../#aimigrate.CoreMigrate">CoreMigrate</a></code></p>
+
+
+        <p>Handle all steps of code migration using files (e.g., code) from the target library as context.</p>
+
+
+<p><span class="doc-section-title">Parameters:</span></p>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Description</th>
+          <th>Default</th>
+        </tr>
+      </thead>
+      <tbody>
+          <tr class="doc-section-item">
+            <td>
+                <code>source_dir</code>
+            </td>
+            <td>
+                  <code>str / path</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>the source folder (or single file) to migrate</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>dest_dir</code>
+            </td>
+            <td>
+                  <code>str / path</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>the destination folder to put the migrated files in</p>
+              </div>
+            </td>
+            <td>
+                <em>required</em>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>files</code>
+            </td>
+            <td>
+                  <code>list</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>if provided, the list of files to migrate (else, migrate all Python files in the source folder)</p>
+              </div>
+            </td>
+            <td>
+                  <code>None</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>library</code>
+            </td>
+            <td>
+                  <code>str / path / module</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>the library to base the migration on (i.e., the path to a git repository)</p>
+              </div>
+            </td>
+            <td>
+                  <code>None</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>library_alias</code>
+            </td>
+            <td>
+                  <code>str</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>string to use as the alias for the library</p>
+              </div>
+            </td>
+            <td>
+                  <code>None</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>v_from</code>
+            </td>
+            <td>
+                  <code>str</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>the git hash or version of Starsim that the code is currently written in</p>
+              </div>
+            </td>
+            <td>
+                  <code>None</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>v_to</code>
+            </td>
+            <td>
+                  <code>str</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>the git hash or version of Starsim that the new code should be written in</p>
+              </div>
+            </td>
+            <td>
+                  <code>None</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>model</code>
+            </td>
+            <td>
+                  <code>str</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>the LLM to use</p>
+              </div>
+            </td>
+            <td>
+                  <code>None</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>model_kw</code>
+            </td>
+            <td>
+                  <code>dict</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>any keywords to pass to the model</p>
+              </div>
+            </td>
+            <td>
+                  <code>None</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>include</code>
+            </td>
+            <td>
+                  <code>list</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>the list of files to include from the diff</p>
+              </div>
+            </td>
+            <td>
+                  <code>None</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>exclude</code>
+            </td>
+            <td>
+                  <code>list</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>the list of files to not include from the diff</p>
+              </div>
+            </td>
+            <td>
+                  <code>None</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>base_prompt</code>
+            </td>
+            <td>
+                  <code>str</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>the prompt template that will be populated with the diff and file information</p>
+              </div>
+            </td>
+            <td>
+                  <code>None</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>parallel</code>
+            </td>
+            <td>
+                  <code>bool</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>whether to migrate the files in parallel</p>
+              </div>
+            </td>
+            <td>
+                  <code>False</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>verbose</code>
+            </td>
+            <td>
+                  <code>bool</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>print information during the migration (default True)</p>
+              </div>
+            </td>
+            <td>
+                  <code>True</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>save</code>
+            </td>
+            <td>
+                  <code>bool</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>whether to save the files to disk (default True)</p>
+              </div>
+            </td>
+            <td>
+                  <code>True</code>
+            </td>
+          </tr>
+          <tr class="doc-section-item">
+            <td>
+                <code>run</code>
+            </td>
+            <td>
+                  <code>bool</code>
+            </td>
+            <td>
+              <div class="doc-md-description">
+                <p>whether to perform the migration immediately (default False)</p>
+              </div>
+            </td>
+            <td>
+                  <code>False</code>
+            </td>
+          </tr>
+      </tbody>
+    </table>
+        <p><strong>Example</strong>::</p>
+<pre><code>import aimigrate as aim
+
+M = aim.MigrateRepo(
+    source_dir = '/path/to/your/code/folder', # folder with the code to migrate
+    dest_dir = '/path/to/migrated/folder', # folder to output migrated code into
+    library = ss, # can also be the path to the starsim folder, which must be the cloned repo (not from pypi)
+    library_alias = 'ss', # the alias to use for the library in the prompt (optional)
+    v_from = 'v1.0', # can be any valid git tag or hash
+    v_to = 'v2.0', # ditto
+    model = 'openai:gpt-4o', # use aisuite's provider:model syntax
+)
+M.run()
+</code></pre>
+
+
+
+
+
+
+              <details class="quote">
+                <summary>Source code in <code>aimigrate/migrate_repo.py</code></summary>
+                <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 33</span>
+<span class="normal"> 34</span>
+<span class="normal"> 35</span>
+<span class="normal"> 36</span>
+<span class="normal"> 37</span>
+<span class="normal"> 38</span>
+<span class="normal"> 39</span>
+<span class="normal"> 40</span>
+<span class="normal"> 41</span>
+<span class="normal"> 42</span>
+<span class="normal"> 43</span>
+<span class="normal"> 44</span>
+<span class="normal"> 45</span>
+<span class="normal"> 46</span>
+<span class="normal"> 47</span>
+<span class="normal"> 48</span>
+<span class="normal"> 49</span>
+<span class="normal"> 50</span>
+<span class="normal"> 51</span>
+<span class="normal"> 52</span>
+<span class="normal"> 53</span>
+<span class="normal"> 54</span>
+<span class="normal"> 55</span>
+<span class="normal"> 56</span>
+<span class="normal"> 57</span>
+<span class="normal"> 58</span>
+<span class="normal"> 59</span>
+<span class="normal"> 60</span>
+<span class="normal"> 61</span>
+<span class="normal"> 62</span>
+<span class="normal"> 63</span>
+<span class="normal"> 64</span>
+<span class="normal"> 65</span>
+<span class="normal"> 66</span>
+<span class="normal"> 67</span>
+<span class="normal"> 68</span>
+<span class="normal"> 69</span>
+<span class="normal"> 70</span>
+<span class="normal"> 71</span>
+<span class="normal"> 72</span>
+<span class="normal"> 73</span>
+<span class="normal"> 74</span>
+<span class="normal"> 75</span>
+<span class="normal"> 76</span>
+<span class="normal"> 77</span>
+<span class="normal"> 78</span>
+<span class="normal"> 79</span>
+<span class="normal"> 80</span>
+<span class="normal"> 81</span>
+<span class="normal"> 82</span>
+<span class="normal"> 83</span>
+<span class="normal"> 84</span>
+<span class="normal"> 85</span>
+<span class="normal"> 86</span>
+<span class="normal"> 87</span>
+<span class="normal"> 88</span>
+<span class="normal"> 89</span>
+<span class="normal"> 90</span>
+<span class="normal"> 91</span>
+<span class="normal"> 92</span>
+<span class="normal"> 93</span>
+<span class="normal"> 94</span>
+<span class="normal"> 95</span>
+<span class="normal"> 96</span>
+<span class="normal"> 97</span>
+<span class="normal"> 98</span>
+<span class="normal"> 99</span>
+<span class="normal">100</span>
+<span class="normal">101</span>
+<span class="normal">102</span>
+<span class="normal">103</span>
+<span class="normal">104</span>
+<span class="normal">105</span>
+<span class="normal">106</span>
+<span class="normal">107</span>
+<span class="normal">108</span>
+<span class="normal">109</span>
+<span class="normal">110</span>
+<span class="normal">111</span>
+<span class="normal">112</span>
+<span class="normal">113</span>
+<span class="normal">114</span>
+<span class="normal">115</span>
+<span class="normal">116</span>
+<span class="normal">117</span>
+<span class="normal">118</span>
+<span class="normal">119</span>
+<span class="normal">120</span>
+<span class="normal">121</span>
+<span class="normal">122</span>
+<span class="normal">123</span>
+<span class="normal">124</span>
+<span class="normal">125</span>
+<span class="normal">126</span>
+<span class="normal">127</span>
+<span class="normal">128</span>
+<span class="normal">129</span>
+<span class="normal">130</span>
+<span class="normal">131</span>
+<span class="normal">132</span>
+<span class="normal">133</span>
+<span class="normal">134</span>
+<span class="normal">135</span>
+<span class="normal">136</span>
+<span class="normal">137</span>
+<span class="normal">138</span>
+<span class="normal">139</span>
+<span class="normal">140</span>
+<span class="normal">141</span>
+<span class="normal">142</span>
+<span class="normal">143</span>
+<span class="normal">144</span>
+<span class="normal">145</span>
+<span class="normal">146</span>
+<span class="normal">147</span>
+<span class="normal">148</span>
+<span class="normal">149</span>
+<span class="normal">150</span>
+<span class="normal">151</span>
+<span class="normal">152</span>
+<span class="normal">153</span>
+<span class="normal">154</span>
+<span class="normal">155</span>
+<span class="normal">156</span>
+<span class="normal">157</span>
+<span class="normal">158</span>
+<span class="normal">159</span>
+<span class="normal">160</span>
+<span class="normal">161</span>
+<span class="normal">162</span>
+<span class="normal">163</span>
+<span class="normal">164</span>
+<span class="normal">165</span>
+<span class="normal">166</span>
+<span class="normal">167</span>
+<span class="normal">168</span>
+<span class="normal">169</span>
+<span class="normal">170</span>
+<span class="normal">171</span>
+<span class="normal">172</span>
+<span class="normal">173</span>
+<span class="normal">174</span>
+<span class="normal">175</span>
+<span class="normal">176</span>
+<span class="normal">177</span>
+<span class="normal">178</span>
+<span class="normal">179</span>
+<span class="normal">180</span>
+<span class="normal">181</span>
+<span class="normal">182</span>
+<span class="normal">183</span>
+<span class="normal">184</span>
+<span class="normal">185</span>
+<span class="normal">186</span>
+<span class="normal">187</span>
+<span class="normal">188</span>
+<span class="normal">189</span>
+<span class="normal">190</span>
+<span class="normal">191</span>
+<span class="normal">192</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span> <span class="nc">MigrateRepo</span><span class="p">(</span><span class="n">aim</span><span class="o">.</span><span class="n">CoreMigrate</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Handle all steps of code migration using files (e.g., code) from the target library as context.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        source_dir (str/path): the source folder (or single file) to migrate</span>
+<span class="sd">        dest_dir (str/path): the destination folder to put the migrated files in</span>
+<span class="sd">        files (list): if provided, the list of files to migrate (else, migrate all Python files in the source folder)</span>
+<span class="sd">        library (str/path/module): the library to base the migration on (i.e., the path to a git repository)</span>
+<span class="sd">        library_alias (str): string to use as the alias for the library</span>
+<span class="sd">        v_from (str): the git hash or version of Starsim that the code is currently written in</span>
+<span class="sd">        v_to (str): the git hash or version of Starsim that the new code should be written in</span>
+<span class="sd">        model (str): the LLM to use</span>
+<span class="sd">        model_kw (dict): any keywords to pass to the model</span>
+<span class="sd">        include (list): the list of files to include from the diff</span>
+<span class="sd">        exclude (list): the list of files to not include from the diff</span>
+<span class="sd">        base_prompt (str): the prompt template that will be populated with the diff and file information</span>
+<span class="sd">        parallel (bool): whether to migrate the files in parallel</span>
+<span class="sd">        verbose (bool): print information during the migration (default True)</span>
+<span class="sd">        save (bool): whether to save the files to disk (default True)</span>
+<span class="sd">        run (bool): whether to perform the migration immediately (default False)</span>
+
+<span class="sd">    **Example**::</span>
+
+<span class="sd">        import aimigrate as aim</span>
+
+<span class="sd">        M = aim.MigrateRepo(</span>
+<span class="sd">            source_dir = &#39;/path/to/your/code/folder&#39;, # folder with the code to migrate</span>
+<span class="sd">            dest_dir = &#39;/path/to/migrated/folder&#39;, # folder to output migrated code into</span>
+<span class="sd">            library = ss, # can also be the path to the starsim folder, which must be the cloned repo (not from pypi)</span>
+<span class="sd">            library_alias = &#39;ss&#39;, # the alias to use for the library in the prompt (optional)</span>
+<span class="sd">            v_from = &#39;v1.0&#39;, # can be any valid git tag or hash</span>
+<span class="sd">            v_to = &#39;v2.0&#39;, # ditto</span>
+<span class="sd">            model = &#39;openai:gpt-4o&#39;, # use aisuite&#39;s provider:model syntax</span>
+<span class="sd">        )</span>
+<span class="sd">        M.run()</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">source_dir</span><span class="p">,</span>
+        <span class="n">dest_dir</span><span class="p">,</span>
+        <span class="n">files</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>  <span class="c1"># Input and output folders</span>
+        <span class="n">library</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">library_alias</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">v_from</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">v_to</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="nb">filter</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>  <span class="c1"># Migration settings</span>
+        <span class="n">include</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">exclude</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>  <span class="c1"># Library settings</span>
+        <span class="n">model</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">model_kw</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">base_prompt</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>  <span class="c1"># Model settings</span>
+        <span class="n">parallel</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+        <span class="n">verbose</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+        <span class="n">save</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+        <span class="n">die</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+        <span class="n">run</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+    <span class="p">):</span>  <span class="c1"># Run settings</span>
+        <span class="c1"># Inputs</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">source_dir</span> <span class="o">=</span> <span class="n">sc</span><span class="o">.</span><span class="n">path</span><span class="p">(</span><span class="n">source_dir</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">dest_dir</span> <span class="o">=</span> <span class="n">sc</span><span class="o">.</span><span class="n">path</span><span class="p">(</span><span class="n">dest_dir</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">files</span> <span class="o">=</span> <span class="n">files</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">library</span> <span class="o">=</span> <span class="n">library</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">library_alias</span> <span class="o">=</span> <span class="n">library_alias</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">v_from</span> <span class="o">=</span> <span class="n">v_from</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">v_to</span> <span class="o">=</span> <span class="n">v_to</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">include</span> <span class="o">=</span> <span class="n">sc</span><span class="o">.</span><span class="n">ifelse</span><span class="p">(</span><span class="n">include</span><span class="p">,</span> <span class="n">DEFAULT_INCLUDE</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">exclude</span> <span class="o">=</span> <span class="n">sc</span><span class="o">.</span><span class="n">ifelse</span><span class="p">(</span><span class="n">exclude</span><span class="p">,</span> <span class="n">DEFAULT_EXCLUDE</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">model</span> <span class="o">=</span> <span class="n">model</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">model_kw</span> <span class="o">=</span> <span class="n">sc</span><span class="o">.</span><span class="n">mergedicts</span><span class="p">(</span><span class="n">model_kw</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">base_prompt</span> <span class="o">=</span> <span class="n">sc</span><span class="o">.</span><span class="n">ifelse</span><span class="p">(</span><span class="n">base_prompt</span><span class="p">,</span> <span class="n">DEFAULT_BASE_PROMPT</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">filter</span> <span class="o">=</span> <span class="n">sc</span><span class="o">.</span><span class="n">ifelse</span><span class="p">(</span><span class="nb">filter</span><span class="p">,</span> <span class="p">[</span><span class="s2">&quot;.py&quot;</span><span class="p">])</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">parallel</span> <span class="o">=</span> <span class="n">parallel</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">verbose</span> <span class="o">=</span> <span class="n">verbose</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">save</span> <span class="o">=</span> <span class="n">save</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">die</span> <span class="o">=</span> <span class="n">die</span>
+
+        <span class="c1"># Populated fields</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">chatter</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">encoder</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">code_files</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">errors</span> <span class="o">=</span> <span class="p">[]</span>
+
+        <span class="c1"># Optionally run</span>
+        <span class="k">if</span> <span class="n">run</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">run</span><span class="p">()</span>
+        <span class="k">return</span>
+
+    <span class="k">def</span> <span class="nf">run</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">make_encoder</span><span class="p">()</span>
+        <span class="c1"># get the repository files</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">get_repo_files</span><span class="p">()</span>
+        <span class="c1"># parse the repository files</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">parse_repo_files</span><span class="p">()</span>
+        <span class="c1"># parse the files for migration</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">make_code_files</span><span class="p">()</span>
+        <span class="c1"># make the prompts</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">make_prompts</span><span class="p">()</span>
+        <span class="c1"># run</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_run</span><span class="p">()</span>
+
+    <span class="k">def</span> <span class="nf">get_repo_files</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="s2">&quot;Getting the repository files&quot;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">parse_library</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">repo_files</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">with</span> <span class="n">aim</span><span class="o">.</span><span class="n">utils</span><span class="o">.</span><span class="n">TemporaryDirectoryChange</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">library</span><span class="p">):</span>
+            <span class="c1"># get current git commit</span>
+            <span class="n">current_head</span> <span class="o">=</span> <span class="n">sc</span><span class="o">.</span><span class="n">runcommand</span><span class="p">(</span><span class="s2">&quot;git rev-parse HEAD&quot;</span><span class="p">)</span>
+            <span class="k">assert</span> <span class="ow">not</span> <span class="n">sc</span><span class="o">.</span><span class="n">runcommand</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;git checkout </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">v_to</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">&quot;error&quot;</span><span class="p">),</span> <span class="p">(</span>
+                <span class="s2">&quot;Invalid v_to&quot;</span>
+            <span class="p">)</span>
+            <span class="n">all_repo_files</span> <span class="o">=</span> <span class="n">aim</span><span class="o">.</span><span class="n">files</span><span class="o">.</span><span class="n">get_python_files</span><span class="p">(</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">library</span><span class="p">,</span> <span class="n">gitignore</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="nb">filter</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">filter</span>
+            <span class="p">)</span>
+            <span class="k">assert</span> <span class="ow">not</span> <span class="n">sc</span><span class="o">.</span><span class="n">runcommand</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;git checkout </span><span class="si">{</span><span class="n">current_head</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span>
+                <span class="s2">&quot;error&quot;</span>
+            <span class="p">),</span> <span class="s2">&quot;Error checking out previous commit&quot;</span>
+        <span class="k">for</span> <span class="n">current_file</span> <span class="ow">in</span> <span class="n">all_repo_files</span><span class="p">:</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">include</span> <span class="ow">and</span> <span class="ow">not</span> <span class="nb">any</span><span class="p">(</span>
+                <span class="n">fnmatch</span><span class="o">.</span><span class="n">fnmatch</span><span class="p">(</span><span class="n">current_file</span><span class="p">,</span> <span class="n">pattern</span><span class="p">)</span> <span class="k">for</span> <span class="n">pattern</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">include</span>
+            <span class="p">):</span>
+                <span class="k">continue</span>
+            <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">exclude</span> <span class="ow">and</span> <span class="nb">any</span><span class="p">(</span>
+                <span class="n">fnmatch</span><span class="o">.</span><span class="n">fnmatch</span><span class="p">(</span><span class="n">current_file</span><span class="p">,</span> <span class="n">pattern</span><span class="p">)</span> <span class="k">for</span> <span class="n">pattern</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">exclude</span>
+            <span class="p">):</span>
+                <span class="k">continue</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">repo_files</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">current_file</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">parse_repo_files</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="s2">&quot;Parsing repository files&quot;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">repo_string</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span>
+        <span class="k">for</span> <span class="n">current_file</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">repo_files</span><span class="p">:</span>
+            <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">library</span> <span class="o">/</span> <span class="n">current_file</span><span class="p">,</span> <span class="s2">&quot;r&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">repo_string</span> <span class="o">+=</span> <span class="s2">&quot;&quot;&quot;File: </span><span class="si">{file_name}</span><span class="se">\n</span><span class="s2">&#39;&#39;&#39;</span><span class="se">\n</span><span class="s2"> </span><span class="si">{code}</span><span class="s2"> &#39;&#39;&#39;</span><span class="se">\n</span><span class="s2">&quot;&quot;&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
+                    <span class="n">file_name</span><span class="o">=</span><span class="n">current_file</span><span class="p">,</span> <span class="n">code</span><span class="o">=</span><span class="n">f</span><span class="o">.</span><span class="n">read</span><span class="p">()</span>
+                <span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">encoder</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">n_tokens</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">encoder</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">repo_string</span><span class="p">))</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">n_tokens</span> <span class="o">=</span> <span class="o">-</span><span class="mi">1</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">verbose</span> <span class="ow">and</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">n_tokens</span> <span class="o">&gt;</span> <span class="o">-</span><span class="mi">1</span><span class="p">):</span>
+            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Number of tokens in repository files: </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">n_tokens</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="k">return</span>
+
+    <span class="k">def</span> <span class="nf">make_prompts</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">for</span> <span class="n">code_file</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">code_files</span><span class="p">:</span>
+            <span class="n">code_file</span><span class="o">.</span><span class="n">make_prompt</span><span class="p">(</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">base_prompt</span><span class="p">,</span>
+                <span class="n">prompt_kwargs</span><span class="o">=</span><span class="p">{</span>
+                    <span class="s2">&quot;library&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">library</span><span class="o">.</span><span class="n">stem</span><span class="p">,</span>
+                    <span class="s2">&quot;library_alias&quot;</span><span class="p">:</span> <span class="sa">f</span><span class="s2">&quot; (</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">library_alias</span><span class="si">}</span><span class="s2">)&quot;</span>
+                    <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">library_alias</span>
+                    <span class="k">else</span> <span class="s2">&quot;&quot;</span><span class="p">,</span>
+                    <span class="s2">&quot;library_code&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">repo_string</span><span class="p">,</span>
+                <span class="p">},</span>
+                <span class="n">encoder</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">encoder</span><span class="p">,</span>
+            <span class="p">)</span>
+        <span class="k">return</span>
+</code></pre></div></td></tr></table></div>
+              </details>
+
+
+
+  <div class="doc doc-children">
+
+
+
+
+
+
+
+
+
+
+
+  </div>
+
+    </div>
+
+</div>
+
+
+
+
+  </div>
+
+    </div>
+
+</div></div>
+            </div>
+        </div>
+
+        <footer class="col-md-12">
+            <hr>
+            <p>Documentation built with <a href="https://www.mkdocs.org/">MkDocs</a>.</p>
+        </footer>
+        <script src="../../../js/bootstrap.bundle.min.js"></script>
+        <script>
+            var base_url = "../../..",
+                shortcuts = {"help": 191, "next": 78, "previous": 80, "search": 83};
+        </script>
+        <script src="../../../js/base.js"></script>
+        <script src="../../../search/main.js"></script>
+
+        <div class="modal" id="mkdocs_search_modal" tabindex="-1" role="dialog" aria-labelledby="searchModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h4 class="modal-title" id="searchModalLabel">Search</h4>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p>From here you can search these documents. Enter your search terms below.</p>
+                <form>
+                    <div class="form-group">
+                        <input type="search" class="form-control" placeholder="Search..." id="mkdocs-search-query" title="Type search term here">
+                    </div>
+                </form>
+                <div id="mkdocs-search-results" data-no-results-text="No results found"></div>
+            </div>
+            <div class="modal-footer">
+            </div>
+        </div>
+    </div>
+</div><div class="modal" id="mkdocs_keyboard_modal" tabindex="-1" role="dialog" aria-labelledby="keyboardModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h4 class="modal-title" id="keyboardModalLabel">Keyboard Shortcuts</h4>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+              <table class="table">
+                <thead>
+                  <tr>
+                    <th style="width: 20%;">Keys</th>
+                    <th>Action</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td class="help shortcut"><kbd>?</kbd></td>
+                    <td>Open this help</td>
+                  </tr>
+                  <tr>
+                    <td class="next shortcut"><kbd>n</kbd></td>
+                    <td>Next page</td>
+                  </tr>
+                  <tr>
+                    <td class="prev shortcut"><kbd>p</kbd></td>
+                    <td>Previous page</td>
+                  </tr>
+                  <tr>
+                    <td class="search shortcut"><kbd>s</kbd></td>
+                    <td>Search</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+            <div class="modal-footer">
+            </div>
+        </div>
+    </div>
+</div>
+
+    </body>
+</html>
