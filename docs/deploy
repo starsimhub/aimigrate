@@ -1,0 +1,4 @@
+#!/bin/bash
+# Deploy the docs to GitHub Pages
+cd `git rev-parse --show-toplevel` # Ensure correct folder (top level)
+mkdocs gh-deploy

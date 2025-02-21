@@ -6,4 +6,6 @@
 
 ## Usage
 
-In the parent folder: `mkdocs serve`
+To preview the docs: `serve` (or in the parent folder, `mkdocs serve`)
+
+To deploy the docs: `deploy` (or in the parent folder, `mkdocs gh-deploy`)
