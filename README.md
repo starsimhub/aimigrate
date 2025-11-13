@@ -1,6 +1,6 @@
 # AIMigrate
 
-AIMigrate helps migrate code to maintain compatability when one of your dependency packackages changes
+AIMigrate helps migrate code to maintain compatibility when one of your dependency packages changes
 
 
 ## Installation
